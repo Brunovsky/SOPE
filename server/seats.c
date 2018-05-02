@@ -86,38 +86,95 @@ static inline void unlock_seat(Seat* seats, int seat_num) {
 
 /**
  * REQUIRED
- * @param  seats    [description]
- * @param  seat_num [description]
- * @return          [description]
+ * The entry point is is_seat_free, which takes hold of the seat's
+ * mutex, validates the argument seat_num, verifies the seat is
+ * indeed available and then forwards variable seats which is a
+ * global in this unit - just to match the required prototype -
+ * to this function.
+ * 
+ * @returns true (1) if the seat is free,
+ *          false (0) otherwise,
+ *          after blocking with DELAY().
+ * 
+ * It is not this function's responsibility to validate the
+ * arguments or avoid race conditions (@see is_seat_free) -- its
+ * responsibility is to simulate complexity with DELAY().
  */
 static int isSeatFree(Seat* seats, int seat_num) {
-    // the entry point is is_seat_free, which validates seat_num and
-    // redundantly passes in variable seats which is a global in this unit.
-    
-    lock_seat(seats, seat_num);
-
     int i = seat_num - 1;
-    bool b = seats[i].reserved;
-
-    int ret = b;
+    int ret = seats[i].reserved;
 
     DELAY();
-
-    unlock_seat(seats, seat_num);
 
     return ret;
 }
 
 /**
  * REQUIRED
- * @param seats    [description]
- * @param seat_num [description]
+ * The entry point is book_seat, which takes hold of the seat's
+ * mutex, validates the argument seat_num, verifies the seat is
+ * indeed available and then forwards variable seats which is a
+ * global in this unit - just to match the required prototype -
+ * to this function.
+ * 
+ * @brief Effectively books the seat seat_num to client client_id
+ *        and blocks with DELAY().
+ * 
+ * It is not this function's responsibility to validate the
+ * arguments or avoid race conditions (@see book_seat) -- its
+ * responsibility is to simulate complexity with DELAY().
  */
-static void bookSeat(Seat* seats, int seat_num) {
-    // the entry point is book_seat, which validates seat_num and
-    // redundantly passes in variable seats which is a global in this unit.
-    
-    lock_seat(seats, seat_num);
+static void bookSeat(Seat* seats, int seat_num, client_t client_id) {
+    int i = seat_num - 1;
+    seats[i].client = client_id;
+    seats[i].reserved = true;
+
+    DELAY();
+}
+
+/**
+ * REQUIRED
+ * The entry point is free_seat, which takes hold of the seat's
+ * mutex, validates the argument seat_num, verifies the seat is
+ * indeed  reserved and then forwards variable seats which is a
+ * global in this unit - just to match the required prototype -
+ * to this function.
+ * 
+ * @brief Effectively frees the seat seat_num from a client
+ *        and blocks with DELAY().
+ * 
+ * It is not this function's responsibility to validate the
+ * arguments or avoid race conditions (@see free_seat) -- its
+ * responsibility is to simulate complexity with DELAY().
+ */
+static void freeSeat(Seat* seats, int seat_num) {
+    int i = seat_num - 1;
+    seats[i].client = NO_CLIENT_CODE;
+    seats[i].reserved = false;
+
+    DELAY();
+}
+
+bool is_seat_free(int seat_num) {
+    if (seat_num < 1 || seat_num > o_seats) {
+        return SEATS_ERR_INVALID_SEATNUM;
+    }
+
+    lock_seat(seat_num);
+
+    bool ret = isSeatFree(seats, seat_num);
+
+    unlock_seat(seat_num);
+
+    return ret;
+}
+
+int book_seat(int seat_num, client_t client_id) {
+    if (seat_num < 1 || seat_num > o_seats) {
+        return SEATS_ERR_INVALID_SEATNUM;
+    }
+
+    lock_seat(seat_num);
 
     int i = seat_num - 1;
     bool b = seats[i].reserved;
@@ -127,29 +184,20 @@ static void bookSeat(Seat* seats, int seat_num) {
     if (b) {
         ret = SEATS_ERR_SEAT_IS_RESERVED;
     } else {
-        // Effectively book seat
-        int i = seat_num - 1;
-        seats[i].client = client_id;
-        seats[i].reserved = true;
+        bookSeat(seats, seat_num, client_id);
     }
 
-    DELAY();
+    unlock_seat(seat_num);
 
-    unlock_seat(seats, seat_num);
-
-    //return ret;
+    return 0;
 }
 
-/**
- * REQUIRED
- * @param seats    [description]
- * @param seat_num [description]
- */
-static void freeSeat(Seat* seats, int seat_num) {
-    // the entry point is free_seat, which validates seat_num and
-    // redundantly passes in variable seats which is a global in this unit.
-    
-    lock_seat(seats, seat_num);
+int free_seat(int seat_num) {
+    if (seat_num < 1 || seat_num > o_seats) {
+        return SEATS_ERR_INVALID_SEATNUM;
+    }
+
+    lock_seat(seat_num);
 
     int i = seat_num - 1;
     bool b = seats[i].reserved;
@@ -157,46 +205,12 @@ static void freeSeat(Seat* seats, int seat_num) {
     int ret = 0;
 
     if (b) {
-        ret = SEATS_ERR_SEAT_NOT_RESERVED;
+        freeSeat(seats, seat_num);
     } else {
-        // Effectively free seat
-        int i = seat_num - 1;
-        seats[i].client = NO_CLIENT_CODE;
-        seats[i].reserved = false;
+        ret = SEATS_ERR_SEAT_NOT_RESERVED;
     }
 
-    DELAY();
+    unlock_seat(seat_num);
 
-    unlock_seat(seats, seat_num);
-
-    //return ret;
-}
-
-// Entry point for isSeatFree()
-bool is_seat_free(int seat_num) {
-    if (seat_num < 1 || seat_num > o_seats) {
-        return SEATS_ERR_INVALID_SEATNUM;
-    }
-
-    return isSeatFree(seats, seat_num);
-}
-
-// Entry point for bookSeat()
-int book_seat(int seat_num, int client_id) {
-    if (seat_num < 1 || seat_num > o_seats) {
-        return SEATS_ERR_INVALID_SEATNUM;
-    }
-
-    bookSeat(seats, seat_num, client_id);
-    return 0;
-}
-
-// Entry point for freeSeat()
-int free_seat(int seat_num) {
-    if (seat_num < 1 || seat_num > o_seats) {
-        return SEATS_ERR_INVALID_SEATNUM;
-    }
-
-    freeSeat(seats, seat_num);
     return 0;
 }

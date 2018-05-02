@@ -1,7 +1,5 @@
-#include "workers.h"
+#include "queue.h"
 #include "options.h"
-#include "wthreads.h"
-#include "seats.h"
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -14,16 +12,18 @@
 
 typedef pthread_mutex_t mutex_t;
 
-// The message queue is a dynamically allocated array that loops
-// around itself to the beginning once messages written have flown
-// past its allocated size.
-// All messages written are strings dinamically allocated by some
-// other module, but freed in this module.
+// The message queue is a dynamically allocated looped array of
+// fixed size (the specs say size 1) containing strings consisting
+// of messages. The messages are written in indices 0, 1, ...
+// and loop back around to the beginning.
+// 
+// Of course if QUEUE_SIZE is set to 1 none of this is relevant,
+// but it works in exactly the same way.
+// 
+// All messages written are strings dinamically allocated and owned
+// by some other module A, then given to this module, then assigned
+// to the collecting module B. No char* are allocated or freed here.
 
-// The semaphores control how many unread and unprocessed messages
-// there are in message_queue.
-// There is nothing to read -- controlled by not_empty_sem
-// There is no space to write more -- controlled by not_full_sem
 static bool queue_initialised = false;
 static bool queue_atexit_set = false;
 static const char** message_queue = NULL;
