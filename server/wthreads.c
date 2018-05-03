@@ -7,6 +7,8 @@
 #include <pthread.h>
 #include <stdbool.h>
 
+typedef pthread_mutex_t mutex_t;
+
 typedef struct {
 	wthread_routine routine;
 	wthread_arg arg;
@@ -20,6 +22,7 @@ static bool wthreads_atexit_set = false;
 static pthread_t* wthreads_ids = NULL;
 static wthread_ret* wthreads_rets = NULL;
 static int wthreads_count = 0, wthreads_size = 0, wthreads_joined = 0;
+static mutex_t mutex_ret;
 
 static void free_wthreads() {
 	if (wthreads_initialised) {
@@ -39,6 +42,14 @@ static void prepare_for_new_wthread() {
 	wthreads_ids = realloc(wthreads_ids, wthreads_size * sizeof(pthread_t));
 	wthreads_rets = realloc(wthreads_rets, wthreads_size * sizeof(wthread_ret));
 	// Not much can be done at the moment if the reallocs fail...
+}
+
+static inline void lock_return() {
+	pthread_mutex_lock(&mutex_ret);
+}
+
+static inline void unlock_return() {
+	pthread_mutex_unlock(&mutex_ret);
 }
 
 static void* wthread(void* void_wrapper) {
@@ -66,16 +77,19 @@ static void* bind(wthread_routine routine, wthread_arg arg, int index) {
 	return (void*)wrapper;
 }
 
+static void init_wthreads() {
+	wthreads_ids = calloc(WTHREADS_INIT_SIZE, sizeof(pthread_t));
+	wthreads_rets = calloc(WTHREADS_INIT_SIZE, sizeof(wthread_ret));
+	wthreads_size = WTHREADS_INIT_SIZE;
+	pthread_mutex_init(&mutex_ret, NULL);
 
+	wthreads_initialised = true;
+}
 
-void setup_new_main() {
+void setup_wthreads() {
 	if (wthreads_initialised) free_wthreads(); // assume we come from a fork
 	
-	wthreads_ids = malloc(WTHREADS_INIT_SIZE * sizeof(pthread_t));
-	wthreads_rets = malloc(WTHREADS_INIT_SIZE * sizeof(wthread_ret));
-	wthreads_size = WTHREADS_INIT_SIZE;
-	
-	wthreads_initialised = true;
+	init_wthreads();
 
 	if (!wthreads_atexit_set) {
 		atexit(free_wthreads);
@@ -91,8 +105,7 @@ int launch_wthread(wthread_routine routine, wthread_arg arg) {
 	return wthreads_count++;
 }
 
-void waitall_wthreads() {
-	// Its not a multithreaded process?...
+void joinall_wthreads() {
 	if (!wthreads_initialised) return;
 
 	// Join all threads not yet joined.
@@ -101,6 +114,9 @@ void waitall_wthreads() {
 	}
 }
 
-wthread_ret wthread_return(int index) {
-	return wthreads_rets[index];
+wthread_ret wthread_return(int id) {
+	lock_return();
+	wthread_ret ret = wthreads_rets[id];
+	unlock_return();
+	return ret;
 }

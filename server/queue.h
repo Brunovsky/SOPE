@@ -1,12 +1,10 @@
 #ifndef QUEUE_H___
 #define QUEUE_H___
 
-typedef pid_t client_t;
+void setup_queue();
 
-void setup_workers();
+void read_message(const char** message_p);
 
-void add_request(client_t client, char* req);
-
-int get_request_result(client_t client);
+void write_message(const char* message);
 
 #endif // QUEUE_H___

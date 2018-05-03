@@ -2,14 +2,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-char compute_cube(char* str) {
+char say_hi(char* str) {
     printf("%s", str);
-    return str[2];
+    return str[0];
 }
 
 int main() {
-    int index1 = launch_wthread(compute_cube, "Hello ");
-    int index2 = launch_wthread(compute_cube, "World!");
+    int index1 = launch_wthread(say_hi, "Hello ");
+    int index2 = launch_wthread(say_hi, "World!\n");
     waitall_wthreads();
     char c1 = wthread_return(index1);
     char c2 = wthread_return(index2);
