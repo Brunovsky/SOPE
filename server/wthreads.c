@@ -7,6 +7,8 @@
 #include <pthread.h>
 #include <stdbool.h>
 
+#define WTHREADS_INIT_SIZE 4
+
 typedef pthread_mutex_t mutex_t;
 
 typedef struct {
@@ -14,8 +16,6 @@ typedef struct {
 	wthread_arg arg;
 	int index;
 } wthread_wrapper_t;
-
-#define WTHREADS_INIT_SIZE 4
 
 static bool wthreads_initialised = false;
 static bool wthreads_atexit_set = false;
@@ -26,6 +26,7 @@ static mutex_t mutex_ret;
 
 static void free_wthreads() {
 	if (wthreads_initialised) {
+		pthread_mutex_destroy(&mutex_ret);
 		free(wthreads_ids);
 		wthreads_ids = NULL;
 		free(wthreads_rets);
@@ -35,21 +36,23 @@ static void free_wthreads() {
 	}
 }
 
-static void prepare_for_new_wthread() {
-	if (wthreads_count < wthreads_size) return;
-
-	wthreads_size *= 2;
-	wthreads_ids = realloc(wthreads_ids, wthreads_size * sizeof(pthread_t));
-	wthreads_rets = realloc(wthreads_rets, wthreads_size * sizeof(wthread_ret));
-	// Not much can be done at the moment if the reallocs fail...
-}
-
 static inline void lock_return() {
 	pthread_mutex_lock(&mutex_ret);
 }
 
 static inline void unlock_return() {
 	pthread_mutex_unlock(&mutex_ret);
+}
+
+static void prepare_for_new_wthread() {
+	if (wthreads_count < wthreads_size) return;
+
+	wthreads_size *= 2;
+	wthreads_ids = realloc(wthreads_ids, wthreads_size * sizeof(pthread_t));
+
+	lock_return();
+	wthreads_rets = realloc(wthreads_rets, wthreads_size * sizeof(wthread_ret));
+	unlock_return();
 }
 
 static void* wthread(void* void_wrapper) {
@@ -62,7 +65,10 @@ static void* wthread(void* void_wrapper) {
 	/* TODO Pre-routine */
 
 	wthread_ret ret = routine(arg);
+
+	lock_return();
 	wthreads_rets[index] = ret;
+	unlock_return();
 
 	/* TODO Post-routine */
 
@@ -98,7 +104,7 @@ void setup_wthreads() {
 }
 
 int launch_wthread(wthread_routine routine, wthread_arg arg) {
-	if (!wthreads_initialised) setup_new_main();
+	if (!wthreads_initialised) setup_wthreads();
 
 	prepare_for_new_wthread();
 	pthread_create(&wthreads_ids[wthreads_count], NULL, wthread, bind(routine, arg, wthreads_count));

@@ -3,8 +3,8 @@
 
 void setup_queue();
 
-void read_message(const char** message_p);
+int read_message(const char** message_p);
 
-void write_message(const char* message);
+int write_message(const char* message);
 
 #endif // QUEUE_H___

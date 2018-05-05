@@ -10,16 +10,20 @@
 #define ERR_NAV -5
 #define ERR_FUL -6
 
-#define SEATS_ERR_INVALID_SEATNUM    1
-#define SEATS_ERR_SEAT_IS_RESERVED   2
-#define SEATS_ERR_SEAT_NOT_RESERVED  3
+#define SEATS_ERR_INVALID_SEATNUM    (1 << 4)
+#define SEATS_ERR_SEAT_IS_RESERVED   (1 << 5)
+#define SEATS_ERR_SEAT_NOT_RESERVED  (1 << 6)
 
 void setup_seats();
 
-bool is_seat_free(int seat_num);
+bool is_valid_seat(int seat_num);
+
+int is_seat_free(int seat_num);
 
 int book_seat(int seat_num, int client_id);
 
 int free_seat(int seat_num);
+
+int log_reserved_seats();
 
 #endif // SEATS_H___

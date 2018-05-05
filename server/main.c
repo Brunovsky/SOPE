@@ -1,42 +1,56 @@
 #include "options.h"
-#include "register.h"
-#include "simgrep.h"
-#include "processes.h"
-#include "traversal.h"
+#include "queue.h"
+#include "seats.h"
+#include "workers.h"
+#include "signals.h"
+#include "fifos.h"
+#include "log.h"
 
-int main(int argc, char** argv) {
-	timestamp_epoch();
-	
-	int parse_s = parse_args(argc, argv);
-	if (parse_s != 0) return parse_s;
+#include <stdio.h>
 
-	int logfile_s = open_logfile();
-	if (logfile_s != 0) return logfile_s;
+int fifo_read_loop() {
+	while (1) {
+		const char* message;
+		int s = read_fifo_requests(&message);
 
-	int regex_s = validate_regex_pattern();
-	if (regex_s != 0) return regex_s;
-
-	int signals_s = set_main_signal_handlers();
-	if (signals_s != 0) return signals_s;
-
-	if (number_of_files > 0) {
-		if (multiprocess) {
-			if (dirtraversal) {
-				init_traversal_dir();
-			} else {
-				init_traversal_fts();
-			}
+		if (s == 0) {
+			printf("message. %s\n", message);
+			write_message(message);
 		} else {
-			if (dirtraversal) {
-				init_traversal_dir_singleprocess();
-			} else {
-				init_traversal_fts_singleprocess();
+			printf("error: %d\n", s);
+			if (alarm_timeout()) {
+				return 0;
 			}
 		}
-	} else {
-		grep_stdin();
 	}
+}
 
-	waitall_children();
+int main(int argc, char** argv) {
+	int s = 0;
+
+	s = parse_args(argc, argv);
+	if (s != 0) return s;
+
+	s = open_slog();
+	if (s != 0) return s;
+
+	s = open_fifo_requests();
+	if (s != 0) return s;
+
+	s = set_signal_handlers();
+	if (s != 0) return s;
+
+	setup_queue();
+	setup_seats();
+	launch_workers();
+	set_alarm();
+
+	printf("Server started...\n");
+
+	fifo_read_loop();
+
+	printf("Server exiting...\n");
+
+	terminate_workers();
 	return 0;
 }

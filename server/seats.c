@@ -1,5 +1,6 @@
 #include "seats.h"
 #include "options.h"
+#include "log.h"
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -9,6 +10,7 @@
 #define NO_CLIENT_CODE -1
 
 typedef pthread_mutex_t mutex_t;
+typedef int client_t;
 
 struct seat_descriptor {
     int num;
@@ -59,8 +61,10 @@ static void init_seats() {
         seats[i].reserved = false;
     }
 
-    mutexes = malloc(o_seats * sizeof(seat_t));
+    mutexes = malloc(o_seats * sizeof(mutex_t));
     init_mutexes();
+
+    seats_initialised = true;
 }
 
 void setup_seats() {
@@ -74,14 +78,14 @@ void setup_seats() {
     }
 }
 
-static inline void lock_seat(Seat* seats, int seat_num) {
+static inline void lock_seat(int seat_num) {
     int i = seat_num - 1;
-    pthread_mutex_lock(&seats[i].mutex);
+    pthread_mutex_lock(&mutexes[i]);
 }
 
-static inline void unlock_seat(Seat* seats, int seat_num) {
+static inline void unlock_seat(int seat_num) {
     int i = seat_num - 1;
-    pthread_mutex_unlock(&seats[i].mutex);
+    pthread_mutex_unlock(&mutexes[i]);
 }
 
 /**
@@ -155,14 +159,18 @@ static void freeSeat(Seat* seats, int seat_num) {
     DELAY();
 }
 
-bool is_seat_free(int seat_num) {
-    if (seat_num < 1 || seat_num > o_seats) {
+bool is_valid_seat(int seat_num) {
+    return !(seat_num < 0 || seat_num > o_seats);
+}
+
+int is_seat_free(int seat_num) {
+    if (!is_valid_seat(seat_num)) {
         return SEATS_ERR_INVALID_SEATNUM;
     }
 
     lock_seat(seat_num);
 
-    bool ret = isSeatFree(seats, seat_num);
+    int ret = isSeatFree(seats, seat_num);
 
     unlock_seat(seat_num);
 
@@ -170,7 +178,7 @@ bool is_seat_free(int seat_num) {
 }
 
 int book_seat(int seat_num, client_t client_id) {
-    if (seat_num < 1 || seat_num > o_seats) {
+    if (!is_valid_seat(seat_num)) {
         return SEATS_ERR_INVALID_SEATNUM;
     }
 
@@ -189,11 +197,11 @@ int book_seat(int seat_num, client_t client_id) {
 
     unlock_seat(seat_num);
 
-    return 0;
+    return ret;
 }
 
 int free_seat(int seat_num) {
-    if (seat_num < 1 || seat_num > o_seats) {
+    if (!is_valid_seat(seat_num)) {
         return SEATS_ERR_INVALID_SEATNUM;
     }
 
@@ -212,5 +220,18 @@ int free_seat(int seat_num) {
 
     unlock_seat(seat_num);
 
-    return 0;
+    return ret;
+}
+
+int log_reserved_seats() {
+    int* array = calloc((seats_size + 1), sizeof(int));
+    int j = 0;
+
+    for (int i = 0; i < seats_size; ++i) {
+        if (seats[i].reserved) {
+            array[j++] = seats[i].num;
+        }
+    }
+
+    return sbook_log(array, j);
 }

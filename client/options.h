@@ -13,21 +13,6 @@
 
 
 // <!--- REQUIRED MACROS
-// Number of room seats available.
-// This can be redefined by command line option -s, --seats-max
-#define MAX_ROOM_SEATS   9999
-
-// Maximum number of seats that may be requested by one single client.
-// This can be redefined by the command line option -c, --client-max
-#define MAX_CLI_SEATS    99
-
-// Register widths
-#define WIDTH_PID        5
-#define WIDTH_XXNN       5
-#define WIDTH_SEAT       4
-
-// Delay for bookSeat and friends
-#define DELAY() sleep(1)
 // ----> END OF REQUIRED MACROS
 
 
@@ -52,30 +37,24 @@ extern int o_show_version;
 
 
 // <!--- OTHER OPTIONS
-// Set MAX_ROOM_SEATS from the command line
-#define SEATSMAX_FLAG 's'
-#define SEATSMAX_LFLAG "seats-max"
-extern int o_max_seats;
-
-// Set MAX_CLI_SEATS from the command line
-#define CLIENTMAX_FLAG 'c'
-#define CLIENTMAX_LFLAG "client-max"
-extern int o_max_client;
+#define SANITIZE_FLAG // NONE
+#define SANITIZE_LFLAG "sanitize"
+extern int o_sanitize;
 // ----> END OF OTHER OPTIONS
 
 
 
-// <!--- SERVER POSITIONAL ARGUMENTS
+// <!--- CINEMA POSITIONAL ARGUMENTS
 // (POS #1) [REQUIRED] The number of seats.
 // This means the seat numbers are [1...o_seats].
-extern int o_seats;
+extern int o_timeout;
 
 // (POS #2) [REQUIRED] The number of threads (workers) to launch
-extern int o_workers;
+extern int o_number;
 
 // (POS #3) [REQUIRED] The server's open time, in seconds
 extern int o_time;
-// ----> END OF SERVER POSITIONAL ARGUMENTS
+// ----> END OF SIMGREP POSITIONAL ARGUMENTS
 
 
 

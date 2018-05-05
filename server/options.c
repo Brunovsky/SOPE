@@ -6,7 +6,6 @@
 #include <string.h>
 #include <getopt.h>
 #include <stdbool.h>
-#include <errno.h>
 #include <locale.h>
 #include <wchar.h>
 
@@ -16,8 +15,8 @@ int o_show_help = false; // h, help
 int o_show_usage = false; // usage
 int o_show_version = false; // V, version
 
-int o_max_seats = MAX_ROOM_SEATS;
-int o_max_client = MAX_CLI_SEATS;
+int o_max_seats = MAX_ROOM_SEATS; // s, seats-max
+int o_max_client = MAX_CLI_SEATS; // c, client-max
 
 int o_seats;
 int o_workers;
@@ -30,7 +29,7 @@ static const struct option long_options[] = {
 	// general options
 	{HELP_LFLAG,              no_argument, &o_show_help,       true},
 	{USAGE_LFLAG,             no_argument, &o_show_usage,      true},
-	{VERSION_LFLAG,           no_argument, &o_show_version,    true}
+	{VERSION_LFLAG,           no_argument, &o_show_version,    true},
 	// other options
 	{SEATSMAX_LFLAG,    required_argument, NULL,      SEATSMAX_FLAG},
 	{CLIENTMAX_LFLAG,   required_argument, NULL,     CLIENTMAX_FLAG},
@@ -42,8 +41,8 @@ static const struct option long_options[] = {
 	//   {lflag, [no|required|optional]_argument, NULL, flag}
 };
 
-// No + prefix (do not enforce POSIX)
-static const char* short_options = "hVs:c:";
+// enforce POSIX with +
+static const char* short_options = "+hVs:c:";
 // x for no_argument, x: for required_argument, x:: for optional_argument
 
 static const wchar_t* version = L"FEUP SOPE 2017-2018\n"
@@ -61,20 +60,51 @@ static const wchar_t* usage = L"usage: server [option]... seats threads time\n"
 	"  -V, --version         Show 'version' message and exit\n"
 	"\n"
 	"Options:\n"
-	"  -s, --seats-max=N     Redefine MAX_ROOM_SEATS to N\n"
-	"  -c, --client-max=N    Redefine MAX_CLI_SEATS to N\n"
+	"  -s, --seats-max=N     Set MAX_ROOM_SEATS to N\n"
+	"  -c, --client-max=N    Set MAX_CLI_SEATS to N\n"
 	"\n";
 
 /**
  * Free all resources allocated to contain options by parse_args.
  */
 static void clear_options() {
-	// At the moment no resources are allocated by parse_args.
+	// At the moment no end-of-program cleanup is required here.
 }
 
 /**
- * Standard unix main's argument parsing function. Allocates resources
- * that are automatically freed at exit.
+ * Prints the program's usage message to standard out.
+ */
+void print_usage() {
+	setlocale(LC_ALL, "");
+	wprintf(usage);
+}
+
+/**
+ * Prints the program version message to standard out.
+ */
+void print_version() {
+	setlocale(LC_ALL, "");
+	wprintf(version);
+}
+
+/**
+ * Prints the incorrect number of positional arguments error message.
+ */
+void print_numpositional(int n) {
+	setlocale(LC_ALL, "");
+	wprintf(L"Error: Expected 3 positional arguments, but got %d.\n%S", n, usage);
+}
+
+/**
+ * Prints the invalid single positional argument error message.
+ */
+void print_badpositional(int i) {
+	setlocale(LC_ALL, "");
+	wprintf(L"Error: Positional argument #%d is invalid.\n%S", i, usage);
+}
+
+/**
+ * Standard unix main's argument parsing function.
  */
 int parse_args(int argc, char** argv) {
 	// Uncomment to disable auto-generated error messages for options:
@@ -123,19 +153,20 @@ int parse_args(int argc, char** argv) {
 			o_max_client = strtol(optarg, NULL, 0);
 			break;
 		case '?':
+		case ':':
 		default:
 			// getopt_long already printed an error message.
 			print_usage();
-			return EINVAL;
+			return -1;
 		}
 	} // End [Options Loop] while
 
-	if (show_help || show_usage) {
+	if (o_show_help || o_show_usage) {
 		print_usage();
 		return -1;
 	}
 
-	if (show_version) {
+	if (o_show_version) {
 		print_version();
 		return -1;
 	}
@@ -156,36 +187,4 @@ int parse_args(int argc, char** argv) {
 	atexit(clear_options);
 
 	return 0;
-}
-
-/**
- * Prints the program's usage message to standard out.
- */
-void print_usage() {
-	setlocale(LC_ALL, "");
-	wprintf(usage);
-}
-
-/**
- * Prints the program version message to standard out.
- */
-void print_version() {
-	setlocale(LC_ALL, "");
-	wprintf(version);
-}
-
-/**
- * Prints the incorrect number of positional arguments error message.
- */
-void print_numpositional(int n) {
-	setlocale(LC_ALL, "");
-	wprintf(L"Error: Expected 3 positional arguments, but got %d.\n%S", n, usage);
-}
-
-/**
- * Prints the invalid single positional argument error message.
- */
-void print_badpositional(int i) {
-	setlocale(LC_ALL, "");
-	wprintf(L"Error: Positional argument #%d is invalid.\n%S", i, usage);
 }
