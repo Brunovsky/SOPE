@@ -15,21 +15,21 @@ static volatile sig_atomic_t alarmed = 0;
 
 // SIGHUP, SIGQUIT, SIGTERM, SIGINT
 static void sighandler_kill(int signum) {
-    static const char* str = "Terminating...\n";
+    static const char* const str = "Terminating...\n";
     write(STDOUT_FILENO, str, strlen(str));
     exit(1);
 }
 
 // SIGABRT
 static void sighandler_abort(int signum) {
-    static const char* str = "Aborting...\n";
+    static const char* const str = "Aborting...\n";
     write(STDOUT_FILENO, str, strlen(str));
     abort();
 }
 
 // SIGPIPE
 static void sighandler_pipe(int signum) {
-    static const char* str = "Caught SIGPIPE\n";
+    static const char* const str = "Caught SIGPIPE\n";
     write(STDOUT_FILENO, str, strlen(str));
     // Ignore at the moment...
 }

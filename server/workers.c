@@ -5,6 +5,7 @@
 #include "queue.h"
 #include "fifos.h"
 #include "log.h"
+#include "debug.h"
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -97,6 +98,17 @@ static inline request_t construct_request(int id, const char* message) {
     return request;
 }
 
+static inline void print_request(request_t* request) {
+    char str[2048];
+
+    sprintf(str, "[%d][%d %d][%d][%d]\n%s\n%s\n%s\n",
+        request->client, request->number, request->total,
+        request->worker, request->error, request->message,
+        request->rest, request->fifoname);
+
+    write(STDOUT_FILENO, str, strlen(str));
+}
+
 static inline const char* error_code(int error) {
     switch (error) {
     case MAX: return MAX_S;
@@ -136,13 +148,12 @@ static int answer_client_success(const request_t* request) {
 }
 
 static int answer_client_failure(const request_t* request) {
-    char* str = malloc(64 * sizeof(char));
+    char str[16];
 
     sprintf(str, "%d\n", request->error);
 
     write_to_fifo(request->fifoname, str);
-    
-    free(str);
+
     return 0;
 }
 
@@ -156,7 +167,7 @@ static void success_log(const request_t* request) {
     };
 
     slog_success(request->worker, success);
-    answer_client_success(request);
+    //answer_client_success(request);
 }
 
 static void failure_log(const request_t* request) {
@@ -169,14 +180,14 @@ static void failure_log(const request_t* request) {
     };
 
     slog_failure(request->worker, fail);
-    answer_client_failure(request);
+    //answer_client_failure(request);
 }
 
 static void hard_fail_log(const request_t* request) {
     slog_hard_failure_t hard_fail = {
         .pid = request->client,
         .number = request->number,
-        .rest = request->message,
+        .rest = request->rest,
         .error = error_code(request->error)
     };
 
@@ -214,9 +225,9 @@ static int validate_request(request_t* request) {
 
 static void parse_request_ints(request_t* request) {
     // Using regex here is quite overkill...
-    static const char* const int_pattern = " *(\\d+) *";
+    static const char* const int_pattern = "^ *([0-9]+) *";
     regex_t regex;
-    regcomp(&regex, int_pattern, REG_EXTENDED);
+    regcomp(&regex, int_pattern, REG_EXTENDED | REG_NEWLINE);
     regmatch_t match[2];
     int offset = 0;
 
@@ -231,22 +242,25 @@ static void parse_request_ints(request_t* request) {
 
         char buf[32];
         int off_s = match[1].rm_so, off_e = match[1].rm_eo;
-        substring(buf, request->rest, off_s, off_e);
+        substring(buf, request->rest + offset, off_s, off_e);
         request->preferred[total++] = atoi(buf);
+
+        printf("%d: %d (%s)\n", total, request->preferred[total-1], buf);
 
         offset += off_e;
     }
 
     request->total = total;
+    if (PDEBUG) print_request(request);
     regfree(&regex);
 }
 
 static int parse_request(request_t* request) {
-    // ECMA pattern:  /^ *(\d+) +(\d+) +((\d+ +)*\d+) *$/g
-    static const char* const regex_pattern = "^ *(\\d+) +(\\d+) +((\\d+ +)*\\d+) *$";
-    static const char* const bad_pattern = "^ *(\\d+) +(\\d+) +(.*)$";
+    // ECMA:  /^ *(\d+) +(\d+) +((\d+ +)*\d+) *$/gm
+    static const char* const regex_pattern = "^ *([0-9]+) +([0-9]+) +(([0-9]+ +)*[0-9]+) *$";
+    static const char* const bad_pattern = "^ *([0-9]+) +([0-9]+) +(.*)$";
     regex_t regex;
-    regcomp(&regex, regex_pattern, REG_EXTENDED);
+    regcomp(&regex, regex_pattern, REG_EXTENDED | REG_NEWLINE);
     regmatch_t match[4];
 
     if (regexec(&regex, request->message, 4, match, 0) == 0) {
@@ -256,16 +270,22 @@ static int parse_request(request_t* request) {
         off_s = match[1].rm_so; off_e = match[1].rm_eo;
         substring(buf, request->message, off_s, off_e);
         request->client = atoi(buf);
+
+        printf("1. %d %d %s\n", off_s, off_e, buf);
         
         off_s = match[2].rm_so; off_e = match[2].rm_eo;
         substring(buf, request->message, off_s, off_e);
         request->number = atoi(buf);
+
+        printf("2. %d %d %s\n", off_s, off_e, buf);
 
         off_s = match[3].rm_so; off_e = match[3].rm_eo;
         char* tmp = malloc((off_e - off_s + 1) * sizeof(char));
         substring(tmp, request->message, off_s, off_e);
         request->rest = tmp;
         make_fifoname(request);
+
+        printf("3. %d %d %s\n", off_s, off_e, tmp);
 
         regfree(&regex);
         parse_request_ints(request);
@@ -276,7 +296,7 @@ static int parse_request(request_t* request) {
         // Otherwise its a hard error, the message does not match our core lex,
         // and there isn't much we can do about it.
         regex_t bad;
-        regcomp(&bad, bad_pattern, REG_EXTENDED);
+        regcomp(&bad, bad_pattern, REG_EXTENDED | REG_NEWLINE);
 
         if (regexec(&bad, request->message, 4, match, 0) == 0) {
             int off_s, off_e;
@@ -301,6 +321,8 @@ static int parse_request(request_t* request) {
             hard_fail_log(request);
             return PARSE_FAILURE;
         } else {
+            request->rest = request->message;
+
             regfree(&bad);
             request->error = BAD;
             hard_fail_log(request);
@@ -314,6 +336,8 @@ static int process_request(request_t* request) {
     // once leeway < 0 we cannot satisfy the request
     int leeway = request->total - request->number;
 
+    request->reserved = malloc(request->number * sizeof(int));
+
     // attempt to reserve seats iteratively
     for (int i = 0; i < request->total; ++i) {
         int seat = request->preferred[i];
@@ -321,30 +345,33 @@ static int process_request(request_t* request) {
 
         if (is_seat_free(seat)) {
             switch (book_seat(seat, client)) {
-            case 0:
+            case SEAT_BOOKED:
                 request->reserved[reserved_so_far++] = seat;
                 break;
+            case SEAT_IS_RESERVED:
             default:
                 --leeway;
                 break;
             }
-
-            if (reserved_so_far == request->number) break;
         } else {
             --leeway;
         }
 
+        // all reserved.
+        if (reserved_so_far == request->number) break;
         // can no longer satisfy the request. stop.
         if (leeway < 0) break;
     }
 
     // free reserved seats upon failure
-    if (reserved_so_far != request->number || leeway < 0) {
+    if (reserved_so_far != request->number) {
         for (int i = 0; i < reserved_so_far; ++i) {
-            int seat = request->preferred[i];
-            free_seat(seat);
+            int seat = request->reserved[i];
+            int ret = free_seat(seat);
+            assert(ret == SEAT_FREED);
         }
 
+        request->error = NAV;
         failure_log(request);
         return PROC_UNSATISFIED;
     } else {

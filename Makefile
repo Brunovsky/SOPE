@@ -1,18 +1,25 @@
-.PHONY: all clean
+.PHONY: all clean server client
 
 CC = gcc
 INCLUDES = -I ./
-# Compiler flags
-CFLAGS = -pthread -O2
-# Linker flags
+
+CFLAGS = -pthread -Og -march=native
+
 LDFLAGS = -lrt
-# Warnings
-WARNS = -Wall -Werror -Wno-unused-result
+
+# Let writes fail silently, for now
+WARNS = -Wall -Wno-unused-result
 
 export CC INCLUDES LDFLAGS CFLAGS WARNS
 
 all:
 	@$(MAKE) -C server
+	@$(MAKE) -C client
+
+server:
+	@$(MAKE) -C server
+
+client:
 	@$(MAKE) -C client
 
 clean:

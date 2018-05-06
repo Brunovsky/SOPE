@@ -27,7 +27,7 @@
 #define WIDTH_SEAT       4
 
 // Delay for bookSeat and friends
-#define DELAY() sleep(1)
+#define DELAY()
 // ----> END OF REQUIRED MACROS
 
 

@@ -9,4 +9,4 @@ all: $(OBJECTS)
 	$(CC) $(CFLAGS) $(WARNS) -c $*.c $(INCLUDES)
 
 clean:
-	rm -f $(OBJECTS) $(ONAME)
+	@rm -f $(OBJECTS) $(ONAME)

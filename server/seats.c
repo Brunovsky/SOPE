@@ -6,15 +6,16 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <stdbool.h>
+#include <stdio.h>
+#include <debug.h>
 
 #define NO_CLIENT_CODE -1
 
 typedef pthread_mutex_t mutex_t;
-typedef int client_t;
 
 struct seat_descriptor {
     int num;
-    int client; // pid
+    client_t client;
     bool reserved;
 };
 
@@ -52,6 +53,7 @@ static void free_seats() {
 }
 
 static void init_seats() {
+    assert(!seats_initialised);
     seats = malloc(o_seats * sizeof(seat_t));
     seats_size = o_seats;
 
@@ -78,12 +80,18 @@ void setup_seats() {
     }
 }
 
+bool is_valid_seat(int seat_num) {
+    return seat_num >= 1 && seat_num <= o_seats;
+}
+
 static inline void lock_seat(int seat_num) {
+    assert(is_valid_seat(seat_num));
     int i = seat_num - 1;
     pthread_mutex_lock(&mutexes[i]);
 }
 
 static inline void unlock_seat(int seat_num) {
+    assert(is_valid_seat(seat_num));
     int i = seat_num - 1;
     pthread_mutex_unlock(&mutexes[i]);
 }
@@ -106,7 +114,7 @@ static inline void unlock_seat(int seat_num) {
  */
 static int isSeatFree(Seat* seats, int seat_num) {
     int i = seat_num - 1;
-    int ret = seats[i].reserved;
+    int ret = !seats[i].reserved;
 
     DELAY();
 
@@ -128,7 +136,7 @@ static int isSeatFree(Seat* seats, int seat_num) {
  * arguments or avoid race conditions (@see book_seat) -- its
  * responsibility is to simulate complexity with DELAY().
  */
-static void bookSeat(Seat* seats, int seat_num, client_t client_id) {
+static void bookSeat(Seat* seats, int seat_num, int client_id) {
     int i = seat_num - 1;
     seats[i].client = client_id;
     seats[i].reserved = true;
@@ -159,14 +167,8 @@ static void freeSeat(Seat* seats, int seat_num) {
     DELAY();
 }
 
-bool is_valid_seat(int seat_num) {
-    return !(seat_num < 0 || seat_num > o_seats);
-}
-
 int is_seat_free(int seat_num) {
-    if (!is_valid_seat(seat_num)) {
-        return SEATS_ERR_INVALID_SEATNUM;
-    }
+    assert(is_valid_seat(seat_num));
 
     lock_seat(seat_num);
 
@@ -174,57 +176,59 @@ int is_seat_free(int seat_num) {
 
     unlock_seat(seat_num);
 
+    if (PDEBUG) printf("is_seat_free[%d] = %d\n", seat_num, ret);
+
     return ret;
 }
 
 int book_seat(int seat_num, client_t client_id) {
-    if (!is_valid_seat(seat_num)) {
-        return SEATS_ERR_INVALID_SEATNUM;
-    }
+    assert(is_valid_seat(seat_num));
 
     lock_seat(seat_num);
 
     int i = seat_num - 1;
     bool b = seats[i].reserved;
-
-    int ret = 0;
+    int ret;
 
     if (b) {
-        ret = SEATS_ERR_SEAT_IS_RESERVED;
+        ret = SEAT_IS_RESERVED;
     } else {
         bookSeat(seats, seat_num, client_id);
+        ret = SEAT_BOOKED;
     }
 
     unlock_seat(seat_num);
+
+    if (PDEBUG) printf("book_seat[%d %d] = %d\n", seat_num, client_id, ret);
 
     return ret;
 }
 
 int free_seat(int seat_num) {
-    if (!is_valid_seat(seat_num)) {
-        return SEATS_ERR_INVALID_SEATNUM;
-    }
+    assert(is_valid_seat(seat_num));
 
     lock_seat(seat_num);
 
     int i = seat_num - 1;
     bool b = seats[i].reserved;
-
-    int ret = 0;
+    int ret;
 
     if (b) {
         freeSeat(seats, seat_num);
+        ret = SEAT_FREED;
     } else {
-        ret = SEATS_ERR_SEAT_NOT_RESERVED;
+        ret = SEAT_NOT_RESERVED;
     }
 
     unlock_seat(seat_num);
+
+    if (PDEBUG) printf("free_seat[%d] = %d\n", seat_num, ret);
 
     return ret;
 }
 
 int log_reserved_seats() {
-    int* array = calloc((seats_size + 1), sizeof(int));
+    int* array = malloc(seats_size * sizeof(int));
     int j = 0;
 
     for (int i = 0; i < seats_size; ++i) {
