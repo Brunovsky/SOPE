@@ -1,4 +1,4 @@
-OBJECTS = main.o
+OBJECTS = main.o options.o requests.o signals.o log.o fifos.o
 ONAME = client
 
 all: $(OBJECTS)

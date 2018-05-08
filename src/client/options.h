@@ -12,11 +12,6 @@
 
 
 
-// <!--- REQUIRED MACROS
-// ----> END OF REQUIRED MACROS
-
-
-
 // <!--- GENERAL OPTIONS
 // Show help/usage message and exit
 #define HELP_FLAG 'h'
@@ -39,22 +34,23 @@ extern int o_show_version;
 // <!--- OTHER OPTIONS
 #define SANITIZE_FLAG // NONE
 #define SANITIZE_LFLAG "sanitize"
+#define NOSANITIZE_FLAG // NONE
+#define NOSANITIZE_LFLAG "no-sanitize"
 extern int o_sanitize;
 // ----> END OF OTHER OPTIONS
 
 
 
-// <!--- CINEMA POSITIONAL ARGUMENTS
-// (POS #1) [REQUIRED] The number of seats.
-// This means the seat numbers are [1...o_seats].
-extern int o_timeout;
+// <!--- CLIENT POSITIONAL ARGUMENTS
+// (POS #1) [REQUIRED] The client's wait time, in seconds
+extern int o_time;
 
-// (POS #2) [REQUIRED] The number of threads (workers) to launch
+// (POS #2) [REQUIRED] The client's number of wanted seats
 extern int o_number;
 
-// (POS #3) [REQUIRED] The server's open time, in seconds
-extern int o_time;
-// ----> END OF SIMGREP POSITIONAL ARGUMENTS
+// (POS #3) [REQUIRED] The client's preference list
+extern char* o_preferred;
+// ----> END OF CLIENT POSITIONAL ARGUMENTS
 
 
 

@@ -29,7 +29,7 @@ int main(int argc, char** argv) {
 	int s = 0;
 
 	s = parse_args(argc, argv);
-	if (s != 0) return s;
+	if (s != 0) return 0;
 
 	s = open_slog();
 	if (s != 0) return s;

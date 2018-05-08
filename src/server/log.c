@@ -1,4 +1,5 @@
 #include "log.h"
+#include "requests.h"
 #include "options.h"
 
 #include <unistd.h>
@@ -62,43 +63,43 @@ int open_sbook() {
 	return 0;
 }
 
-char* stringify_intarray(int* array, int size) {
+char* stringify_intarray(const int* array, int size) {
 	char* str = calloc(10 * size, sizeof(char));
 	char tmp[16];
 
 	for (int i = 0; i < size; ++i) {
-		if (i > 0) sprintf(tmp, " %06d", array[i]);
-		else sprintf(tmp, "%06d", array[i]);
+		if (i > 0) sprintf(tmp, " %04d", array[i]);
+		else sprintf(tmp, "%04d", array[i]);
 		strcat(str, tmp);
 	}
 
 	return str;
 }
 
-void slog_worker_open(int id) {
+void slog_worker_open(int worker) {
 	char str[64];
 
-	sprintf(str, "%08d-OPEN\n", id);
+	sprintf(str, "%05d-OPEN\n", worker);
 
 	write(slogno, str, strlen(str));
 }
 
-void slog_worker_exit(int id) {
+void slog_worker_exit(int worker) {
 	char str[64];
 
-	sprintf(str, "%08d-CLOSED\n", id);
+	sprintf(str, "%05d-CLOSED\n", worker);
 
 	write(slogno, str, strlen(str));
 }
 
-void slog_success(int id, slog_success_t m) {
-	char* preferred_str = stringify_intarray(m.preferred, m.total);
-	char* reserved_str = stringify_intarray(m.reserved, m.number);
-	char* str = malloc((64 + strlen(preferred_str)
-		+ strlen(reserved_str)) * sizeof(char));
+static void slog_success(const request_t* request) {
+	char* preferred_str = stringify_intarray(request->preferred, request->total);
+	char* reserved_str = stringify_intarray(request->reserved, request->number);
+	char* str = malloc((64 + strlen(preferred_str) + strlen(reserved_str)) * sizeof(char));
 
-	sprintf(str, "%08d-%04d-%04d: %s: %s\n",
-		id, m.pid, m.number, preferred_str, reserved_str);
+	sprintf(str, "%05d-%04d-%04d: %s: %s\n",
+		request->worker, request->client, request->number,
+		preferred_str, reserved_str);
 
 	free(preferred_str);
 	free(reserved_str);
@@ -107,13 +108,13 @@ void slog_success(int id, slog_success_t m) {
 	free(str);
 }
 
-void slog_failure(int id, slog_failure_t m) {
-	char* preferred_str = stringify_intarray(m.preferred, m.total);
-	char* str = malloc((64 + strlen(preferred_str)
-		+ strlen(m.error)) * sizeof(char));
+static void slog_failure(const request_t* request) {
+	char* preferred_str = stringify_intarray(request->preferred, request->total);
+	char* str = malloc((64 + strlen(preferred_str) + 3) * sizeof(char));
 
-	sprintf(str, "%08d-%04d-%04d: %s: %s\n",
-		id, m.pid, m.number, preferred_str, m.error);
+	sprintf(str, "%05d-%04d-%04d: %s: %s\n",
+		request->worker, request->client, request->number,
+		preferred_str, error_string(request->error));
 
 	free(preferred_str);
 
@@ -121,18 +122,28 @@ void slog_failure(int id, slog_failure_t m) {
 	free(str);
 }
 
-void slog_hard_failure(int id, slog_hard_failure_t m) {
-	char* str = malloc((64 + strlen(m.rest)
-		+ strlen(m.error)) * sizeof(char));
+static void slog_hard_failure(const request_t* request) {
+	char* str = malloc((64 + strlen(request->rest) + 3) * sizeof(char));
 
-	sprintf(str, "%08d-%04d-%04d: %s: %s\n",
-		id, m.pid, m.number, m.rest, m.error);
+	sprintf(str, "%05d-%04d-%04d: %s: %s\n",
+		request->worker, request->client, request->number,
+		request->rest, error_string(request->error));
 
 	write(slogno, str, strlen(str));
 	free(str);
 }
 
-int sbook_log(int* array, int size) {
+void slog_request(const request_t* request) {
+	if (request->error == 0) {
+		slog_success(request);
+	} else if (request->preferred != NULL) {
+		slog_failure(request);
+	} else {
+		slog_hard_failure(request);
+	}
+}
+
+int sbook_log(const int* array, int size) {
 	int s = open_sbook();
 	if (s != 0) return s;
 

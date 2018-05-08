@@ -78,13 +78,19 @@ int read_fifo_requests(const char** message_p) {
 }
 
 int write_to_fifo(const char* fifoname, const char* message) {
-    int target_fifo = open(fifoname, O_RDONLY | O_NONBLOCK);
+    int target_fifo = open(fifoname, O_WRONLY | O_NONBLOCK);
     if (target_fifo == -1) {
-        // The fifo is closed
-        return errno;
+        int err = errno;
+        printf("server: error opening fifo %s: %s\n", fifoname, strerror(errno));
+        return err;
     }
 
+    // race condition: we're racing the client process in this write.
+    // if we get put on hold and client closes and/or destroys the fifo,
+    // this write raises SIGPIPE, which we catch in signals.c.
     write(target_fifo, message, strlen(message));
+
+    printf("server: wrote to fifo %d: %s\n", target_fifo, message);
 
     close(target_fifo);
     return 0;
