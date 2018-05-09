@@ -7,6 +7,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <regex.h>
+#include <stdbool.h>
+
+static bool request_initialised = false;
+static bool request_atexit_set = false;
+request_t* request = NULL;
 
 static inline int substring(char* buf, const char* str, int off_s, int off_e) {
     stpcpy(stpncpy(buf, str + off_s, off_e - off_s), "\0");
@@ -60,7 +65,7 @@ static int parse_ints(const char* str, int** ints_p, int* total_p) {
     return 0;
 }
 
-void free_request(request_t* request) {
+static void free_request() {
     free(request->preferred);
     free(request->reserved);
     free((char*)request->message);
@@ -69,26 +74,34 @@ void free_request(request_t* request) {
     free(request);
 }
 
-request_t* make_request() {
-    request_t* request = malloc(sizeof(request_t));
+int make_request() {
+    request = calloc(1, sizeof(request_t));
     request->client = getpid();
     request->number = o_number;
     request->error = 0;
 
     char* message = malloc((32 + strlen(o_preferred)) * sizeof(char));
-    sprintf(message, "%d %d %s\n",
-        request->client, request->number, o_preferred);
+    sprintf(message, "%d %d %s\n", request->client, request->number, o_preferred);
     request->message = message;
     request->rest = strdup(o_preferred);
     request->answer = NULL;
 
-    int parse_s = parse_ints(request->rest, &request->preferred, &request->total);
-    if (parse_s != 0) {
-        free(request);
-        return NULL;
+    request_initialised = true;
+
+    if (!request_atexit_set) {
+        atexit(free_request);
+        request_atexit_set = true;
     }
-    
-    return request;
+
+    if (PDEBUG) {
+        int parse_s = parse_ints(request->rest, &request->preferred, &request->total);
+        if (parse_s != 0) {
+            printf("client %d: invalid preference list: %s\n", getpid(), o_preferred);
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    return 0;
 }
 
 const char* error_string(int error) {
@@ -103,7 +116,7 @@ const char* error_string(int error) {
     }
 }
 
-static int validate_success(request_t* request) {
+static int validate_success() {
     static const char* const pattern = "^SUCCESS(( +[0-9]+)+) *$";
     regex_t regex;
     regcomp(&regex, pattern, REG_EXTENDED | REG_NEWLINE);
@@ -115,6 +128,7 @@ static int validate_success(request_t* request) {
         substring(str, request->answer, off_s, off_e);
         parse_ints(str, &request->reserved, &request->number);
 
+        free(str);
         regfree(&regex);
         return 0;
     } else {
@@ -123,7 +137,7 @@ static int validate_success(request_t* request) {
     }
 }
 
-static int validate_failure(request_t* request) {
+static int validate_failure() {
     static const char* const pattern = "^ *(-?[0-9]+) *$";
     regex_t regex;
     regcomp(&regex, pattern, REG_EXTENDED | REG_NEWLINE);
@@ -143,15 +157,18 @@ static int validate_failure(request_t* request) {
     }
 }
 
-int parse_answer(request_t* request) {
-    if (validate_success(request) == 0) {
+int parse_answer() {
+    if (validate_success() == 0) {
         return 0;
     }
 
-    if (validate_failure(request) == 0) {
+    if (validate_failure() == 0) {
         return 0;
     }
 
-    printf("client %d: unrecognized answer message: %s\n", getpid(), request->answer);
-    return 1;
+    if (PDEBUG) {
+        printf("client %d: unrecognized answer message: %s\n", getpid(), request->answer);
+    }
+
+    exit(EXIT_FAILURE);
 }

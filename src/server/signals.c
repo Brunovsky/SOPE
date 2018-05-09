@@ -1,6 +1,7 @@
 #include "signals.h"
 #include "options.h"
 #include "log.h"
+#include "debug.h"
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -9,35 +10,38 @@
 #include <signal.h>
 #include <errno.h>
 
-
-
 static volatile sig_atomic_t alarmed = 0;
+
+static const char str_kill[]  = "server: Terminating...\n";
+static const char str_abort[] = "server: Aborting...\n";
+static const char str_pipe[]  = "server: Caught SIGPIPE...\n";
+static const char str_alarm[] = "server: Alarmed...\n";
 
 // SIGHUP, SIGQUIT, SIGTERM, SIGINT
 static void sighandler_kill(int signum) {
-    static const char* const str = "Terminating...\n";
-    write(STDOUT_FILENO, str, strlen(str));
-    exit(1);
+    if (PDEBUG) write(STDOUT_FILENO, str_kill, strlen(str_kill));
+    exit(EXIT_FAILURE);
 }
 
 // SIGABRT
 static void sighandler_abort(int signum) {
-    static const char* const str = "Aborting...\n";
-    write(STDOUT_FILENO, str, strlen(str));
+    if (PDEBUG) write(STDOUT_FILENO, str_abort, strlen(str_abort));
     abort();
 }
 
 // SIGPIPE
 static void sighandler_pipe(int signum) {
-    static const char* const str = "Caught SIGPIPE\n";
-    write(STDOUT_FILENO, str, strlen(str));
+    if (PDEBUG) write(STDOUT_FILENO, str_pipe, strlen(str_pipe));
     // Ignore at the moment...
 }
 
 // SIGALRM
 static void sighandler_alarm(int signum) {
+    if (PDEBUG) write(STDOUT_FILENO, str_alarm, strlen(str_alarm));
     alarmed = 1;
 }
+
+// TODO: fix race condition in alarm vs getline
 
 /**
  * Set the process's signal handlers and overall dispositions,
@@ -50,9 +54,8 @@ int set_signal_handlers() {
     // Get current sigmask
     int s = sigprocmask(SIG_SETMASK, NULL, &current);
     if (s != 0) {
-        int err = errno;
-        printf("Error getting process signal mask: %s\n", strerror(err));
-        return err;
+        printf("server: Error getting process signal mask: %s\n", strerror(errno));
+        exit(EXIT_FAILURE);
     }
 
     // Set kill handler
@@ -62,27 +65,23 @@ int set_signal_handlers() {
     action.sa_flags = SA_RESETHAND;
     s = sigaction(SIGHUP, &action, NULL);
     if (s != 0) {
-        int err = errno;
-        printf("Error setting handler for SIGHUP: %s\n", strerror(err));
-        return err;
+        printf("server: Error setting handler for SIGHUP: %s\n", strerror(errno));
+        exit(EXIT_FAILURE);
     }
     s = sigaction(SIGQUIT, &action, NULL);
     if (s != 0) {
-        int err = errno;
-        printf("Error setting handler for SIGQUIT: %s\n", strerror(err));
-        return err;
+        printf("server: Error setting handler for SIGQUIT: %s\n", strerror(errno));
+        exit(EXIT_FAILURE);
     }
     s = sigaction(SIGTERM, &action, NULL);
     if (s != 0) {
-        int err = errno;
-        printf("Error setting handler for SIGTERM: %s\n", strerror(err));
-        return err;
+        printf("server: Error setting handler for SIGTERM: %s\n", strerror(errno));
+        exit(EXIT_FAILURE);
     }
     s = sigaction(SIGINT, &action, NULL);
     if (s != 0) {
-        int err = errno;
-        printf("Error setting handler for SIGINT: %s\n", strerror(err));
-        return err;
+        printf("server: Error setting handler for SIGINT: %s\n", strerror(errno));
+        exit(EXIT_FAILURE);
     }
 
     // Set abort handler
@@ -92,9 +91,8 @@ int set_signal_handlers() {
     action.sa_flags = SA_RESETHAND;
     s = sigaction(SIGABRT, &action, NULL);
     if (s != 0) {
-        int err = errno;
-        printf("Error setting handler for SIGABRT: %s\n", strerror(err));
-        return err;
+        printf("server: Error setting handler for SIGABRT: %s\n", strerror(errno));
+        exit(EXIT_FAILURE);
     }
 
     // Set pipe handler
@@ -104,9 +102,8 @@ int set_signal_handlers() {
     action.sa_flags = SA_RESTART;
     s = sigaction(SIGPIPE, &action, NULL);
     if (s != 0) {
-        int err = errno;
-        printf("Error setting handler for SIGPIPE: %s\n", strerror(err));
-        return err;
+        printf("server: Error setting handler for SIGPIPE: %s\n", strerror(errno));
+        exit(EXIT_FAILURE);
     }
 
     // Set alarm handler
@@ -116,9 +113,8 @@ int set_signal_handlers() {
     action.sa_flags = SA_RESETHAND;
     s = sigaction(SIGALRM, &action, NULL);
     if (s != 0) {
-        int err = errno;
-        printf("Error setting handler for SIGALRM: %s\n", strerror(err));
-        return err;
+        printf("server: Error setting handler for SIGALRM: %s\n", strerror(errno));
+        exit(EXIT_FAILURE);
     }
 
     return 0;

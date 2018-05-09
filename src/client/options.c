@@ -4,11 +4,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <errno.h>
 #include <getopt.h>
 #include <stdbool.h>
 #include <locale.h>
 #include <wchar.h>
-
+#include <math.h>
+#include <limits.h>
 
 // <!--- OPTIONS (Resolve externals of options.h)
 int o_show_help = false; // h, help
@@ -17,9 +19,14 @@ int o_show_version = false; // V, version
 
 int o_sanitize = false; // sanitize
 
+int o_seatwidth = WIDTH_SEAT; // width of field seat in CLOG, CBOOK.
+int o_pidwidth = WIDTH_PID; // width of field pid in CLOG
+int o_xwidth = 2; // width of field XX in CLOG
+int o_nwidth = 2; // width of field NN in CLOG
+
 int o_time;
 int o_number;
-char* o_preferred = NULL;
+const char* o_preferred = NULL;
 // ----> END OF OPTIONS
 
 
@@ -64,35 +71,51 @@ static const wchar_t* usage = L"usage: client [option]... time number preference
     "      --no-sanitize     Sanitize preference_list\n"
     "\n";
 
-/**
- * Free all resources allocated to contain options by parse_args.
- */
 static void clear_options() {
-    free(o_preferred);
+    free((char*)o_preferred);
 }
 
-/**
- * Prints the program's usage message to standard out.
- */
-void print_usage() {
+static void print_all() {
     setlocale(LC_ALL, "");
     wprintf(usage);
+    wprintf(version);
+    exit(EXIT_SUCCESS);
 }
 
-/**
- * Prints the program version message to standard out.
- */
-void print_version() {
+static void print_usage() {
+    setlocale(LC_ALL, "");
+    wprintf(usage);
+    exit(EXIT_SUCCESS);
+}
+
+static void print_version() {
     setlocale(LC_ALL, "");
     wprintf(version);
+    exit(EXIT_SUCCESS);
 }
 
-/**
- * Prints the incorrect number of positional arguments error message.
- */
-void print_numpositional(int n) {
+static void print_numpositional(int n) {
     setlocale(LC_ALL, "");
     wprintf(L"Error: Expected 3 positional arguments, but got %d.\n%S", n, usage);
+    exit(EXIT_SUCCESS);
+}
+
+static void print_badpositional(int i) {
+    setlocale(LC_ALL, "");
+    wprintf(L"Error: Positional argument #%d is invalid.\n%S", i, usage);
+    exit(EXIT_SUCCESS);
+}
+
+static int parse_int(const char* str, int* store) {
+    char* endp;
+    long result = strtol(str, &endp, 10);
+
+    if (endp == str || errno == ERANGE || result >= INT_MAX || result <= INT_MIN) {
+        return 1;
+    } else {
+        *store = (int)result;
+        return 0;
+    }
 }
 
 /**
@@ -104,9 +127,7 @@ int parse_args(int argc, char** argv) {
 
     // If there are no args, print usage and version messages and exit
     if (argc == 1) {
-        print_usage();
-        print_version();
-        return -1;
+        print_all();
     }
 
     // Standard getopt_long Options Loop
@@ -143,34 +164,35 @@ int parse_args(int argc, char** argv) {
         default:
             // getopt_long already printed an error message.
             print_usage();
-            return -1;
         }
     } // End [Options Loop] while
 
     if (o_show_help || o_show_usage) {
         print_usage();
-        return -1;
     }
 
     if (o_show_version) {
         print_version();
-        return -1;
     }
 
     // Exactly 3 positional arguments are expected
     int num_positional = argc - optind;
 
     if (num_positional == 3) {
-        o_time    = strtol(argv[optind++], NULL, 10);
-        o_number  = strtol(argv[optind++], NULL, 10);
+        if (parse_int(argv[optind++], &o_time) != 0) {
+            print_badpositional(1);
+        }
+        if (parse_int(argv[optind++], &o_number) != 0) {
+            print_badpositional(2);
+        }
         o_preferred = strdup(argv[optind++]);
-        // TODO: Check errno after each call
     } else {
         print_numpositional(num_positional);
-        return -1;
     }
 
-    atexit(clear_options);
+    o_xwidth = (int)fmax(2.0, ceil((WIDTH_XXNN - 1) / 2.0));
+    o_nwidth = (int)fmax(2.0, floor((WIDTH_XXNN - 1) / 2.0));
 
+    atexit(clear_options);
     return 0;
 }

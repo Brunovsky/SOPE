@@ -3,25 +3,26 @@
 CC = gcc
 INCLUDES = -I ./
 
-CFLAGS = -pthread -Og -g -march=native
+CFLAGS = -pthread -Og -g -march=native -lm
 
-LDFLAGS = -lrt
+LDFLAGS = -lm -pthread -lrt
 
 WARNS = -Wall -Wextra \
 	-Wno-unused-result -Wno-unused-parameter
 
-ROOT_PATH = ~/cinema
-
-export CC INCLUDES LDFLAGS CFLAGS WARNS ROOT_PATH
+export CC INCLUDES CFLAGS LDFLAGS WARNS
 
 all: server client
 
 server:
 	@$(MAKE) -C src/server
+	mv src/server/server .
 
 client:
 	@$(MAKE) -C src/client
+	mv src/client/client .
 
 clean:
 	@$(MAKE) clean -C src/server
 	@$(MAKE) clean -C src/client
+	rm server client

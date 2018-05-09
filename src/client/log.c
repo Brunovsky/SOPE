@@ -1,4 +1,6 @@
 #include "log.h"
+#include "options.h"
+#include "requests.h"
 #include "debug.h"
 
 #include <unistd.h>
@@ -10,6 +12,8 @@
 #include <sys/types.h>
 #include <fcntl.h>
 
+#define CLOG_NAME   "clog.txt"
+#define CBOOK_NAME "cbook.txt"
 #define CLOG_PERMISSIONS  0660
 #define CBOOK_PERMISSIONS 0660
 
@@ -30,9 +34,8 @@ static inline void close_cbook() {
 static int open_clog() {
     clogno = open(clogname, O_WRONLY | O_CREAT | O_APPEND, CLOG_PERMISSIONS);
     if (clogno == -1) {
-        int err = errno;
-        printf("client %d: Failed to open log file clog.txt: %s\n", getpid(), strerror(err));
-        return err;
+        printf("client %d: Failed to open client log file %s: %s\n", getpid(), CLOG_NAME, strerror(errno));
+        return 1; // do not exit here.
     }
     return 0;
 }
@@ -40,38 +43,40 @@ static int open_clog() {
 static int open_cbook() {
     cbookno = open(cbookname, O_WRONLY | O_CREAT | O_APPEND, CBOOK_PERMISSIONS);
     if (cbookno == -1) {
-        int err = errno;
-        printf("client %d: Failed to open log file cbook.txt: %s\n", getpid(), strerror(err));
-        return err;
+        printf("client %d: Failed to open client log file %s: %s\n", getpid(), CBOOK_NAME, strerror(errno));
+        return 1; // do not exit here.
     }
     return 0;
 }
 
-static int clog_success(request_t* request) {
+static int clog_success() {
     char str[64];
 
     for (int i = 0; i < request->number; ++i) {
-        sprintf(str, "%05d %02d.%02d %04d\n",
-            request->client, i + 1, request->number, request->reserved[i]);
+        sprintf(str, "%0*d %0*d.%0*d %0*d\n",
+            o_pidwidth, request->client,
+            o_xwidth, i + 1,
+            o_nwidth, request->number,
+            o_seatwidth, request->reserved[i]);
         write(clogno, str, strlen(str));
     }
 
     return 0;
 }
 
-static int clog_failure(request_t* request) {
+static int clog_failure() {
     char str[32];
 
-    sprintf(str, "%05d %s\n",
-        request->client, error_string(request->error));
+    sprintf(str, "%0*d %s\n",
+        o_pidwidth, request->client, error_string(request->error));
     write(clogno, str, strlen(str));
 
     return 0;
 }
 
-int clog_log(request_t* request) {
-    int open_s = open_clog();
-    if (open_s != 0) return open_s;
+int clog_log() {
+    int s = open_clog();
+    if (s != 0) return s;
 
     if (request->error == 0) {
         clog_success(request);
@@ -83,15 +88,15 @@ int clog_log(request_t* request) {
     return 0;
 }
 
-int cbook_log(request_t* request) {
+int cbook_log() {
     if (request->error != 0) return 0;
 
-    int open_s = open_cbook();
-    if (open_s != 0) return open_s;
+    int s = open_cbook();
+    if (s != 0) return s;
 
     for (int i = 0; i < request->number; ++i) {
         char str[16];
-        sprintf(str, "%04d\n", request->reserved[i]);
+        sprintf(str, "%0*d\n", o_seatwidth, request->reserved[i]);
         write(cbookno, str, strlen(str));
     }
 

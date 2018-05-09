@@ -17,6 +17,9 @@
 
 #define WORKER_EXIT_STRING "EXIT"
 
+static bool workers_running = false;
+static bool workers_atexit_set = false;
+
 static int answer_client_success(const request_t* request) {
     char* ints = stringify_intarray(request->reserved, request->number);
     char* str = malloc((16 + strlen(ints)) * sizeof(char));
@@ -41,11 +44,21 @@ static int answer_client_failure(const request_t* request) {
 }
 
 static int answer_client(const request_t* request) {
-    write(STDOUT_FILENO, "REQUEST ANSWER!\n", strlen("REQUEST ANSWER!\n"));
-    if (request->error == 0) {
+    if (request->error == 0 && request->fifoname != NULL) {
         return answer_client_success(request);
-    } else {
+    } else if (request->error != 0 && request->fifoname != NULL) {
         return answer_client_failure(request);
+    } else {
+        if (PDEBUG) printf("server: Badly formatted request\n");
+    }
+    return 1;
+}
+
+static void free_reserved_seats(request_t* request, int total_reserved) {
+    for (int i = 0; i < total_reserved; ++i) {
+        int seat = request->reserved[i];
+        int ret = free_seat(seat);
+        assert(ret == SEAT_FREED);
     }
 }
 
@@ -55,6 +68,8 @@ static int process_request(request_t* request) {
     int reserved_so_far = 0;
     // once leeway < 0 we cannot satisfy the request
     int leeway = request->total - request->number;
+    // if seat, we got a full house error
+    bool fullhouse = false;
 
     request->reserved = malloc(request->number * sizeof(int));
 
@@ -68,6 +83,9 @@ static int process_request(request_t* request) {
             case SEAT_BOOKED:
                 request->reserved[reserved_so_far++] = seat;
                 break;
+            case SEAT_FULL_HOUSE:
+                fullhouse = true;
+                break;
             case SEAT_IS_RESERVED:
             default:
                 --leeway;
@@ -80,18 +98,14 @@ static int process_request(request_t* request) {
         // all reserved.
         if (reserved_so_far == request->number) break;
         // can no longer satisfy the request. stop.
-        if (leeway < 0) break;
+        if (leeway < 0 || fullhouse) break;
     }
 
     // free reserved seats upon failure
     if (reserved_so_far != request->number) {
-        for (int i = 0; i < reserved_so_far; ++i) {
-            int seat = request->reserved[i];
-            int ret = free_seat(seat);
-            assert(ret == SEAT_FREED);
-        }
+        free_reserved_seats(request, reserved_so_far);
 
-        request->error = NAV;
+        request->error = fullhouse ? FUL : NAV;
         return 1;
     } else {
         return 0;
@@ -104,6 +118,17 @@ static bool is_exit_command(const char* message) {
     return is;
 }
 
+static void terminate_workers() {
+    if (!workers_running) return;
+
+    for (int i = 1; i <= o_workers; ++i) {
+        write_message(WORKER_EXIT_STRING);
+    }
+
+    joinall_wthreads();
+    workers_running = false;
+}
+
 static int worker(int id) {
     slog_worker_open(id);
 
@@ -113,8 +138,8 @@ static int worker(int id) {
 
         if (is_exit_command(message)) break;
 
-        write(STDOUT_FILENO, "REQUEST!\n", strlen("REQUEST!\n"));
         request_t* request = make_request(id, message);
+
         process_request(request);
         answer_client(request);
         slog_request(request);
@@ -129,15 +154,12 @@ int launch_workers() {
     for (int i = 1; i <= o_workers; ++i) {
         launch_wthread(worker, i);
     }
+    workers_running = true;
 
-    return 0;
-}
-
-int terminate_workers() {
-    for (int i = 0; i < o_workers; ++i) {
-        write_message(WORKER_EXIT_STRING);
+    if (!workers_atexit_set) {
+        atexit(terminate_workers);
+        workers_atexit_set = true;
     }
 
-    joinall_wthreads();
     return 0;
 }

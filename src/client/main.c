@@ -4,36 +4,23 @@
 #include "requests.h"
 #include "signals.h"
 
-#include <stddef.h>
+#include <stdlib.h>
 
 int main(int argc, char** argv) {
-    int s = 0;
+    parse_args(argc, argv);
+    set_signal_handlers();
 
-    s = parse_args(argc, argv);
-    if (s != 0) return s;
-
-    s = set_signal_handlers();
-    if (s != 0) return s;
-
-    request_t* request = make_request();
-    if (request == NULL) return 1;
-
-    s = open_fifo_ans();
-    if (s != 0) return s;
-
+    make_request();
+    open_fifo_ans();
     set_alarm();
 
-    s = write_fifo_requests(request->message);
-    if (s != 0) return s;
+    write_fifo_requests(request->message);
+    read_fifo_ans(&request->answer);
 
-    s = read_fifo_ans(&request->answer);
-    if (s != 0) return s;
+    parse_answer();
 
-    s = parse_answer(request);
-    if (s != 0) return s;
-
-    clog_log(request);
-    cbook_log(request);
-    free_request(request);
-    return 0;
+    clog_log();
+    cbook_log();
+    
+    exit(EXIT_SUCCESS);
 }

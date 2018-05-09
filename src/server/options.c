@@ -4,11 +4,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <errno.h>
 #include <getopt.h>
 #include <stdbool.h>
 #include <locale.h>
 #include <wchar.h>
-
+#include <math.h>
+#include <limits.h>
 
 // <!--- OPTIONS (Resolve externals of options.h)
 int o_show_help = false; // h, help
@@ -17,6 +19,17 @@ int o_show_version = false; // V, version
 
 int o_max_seats = MAX_ROOM_SEATS; // s, seats-max
 int o_max_client = MAX_CLI_SEATS; // c, client-max
+
+// width of field Ti in SLOG
+int o_twidth = 2;
+// width of field seat in SLOG, SBOOK.
+int o_seatwidth = WIDTH_SEAT;
+// width of field pid in SLOG
+int o_pidwidth = WIDTH_PID;
+// width of field N in SLOG
+int o_nwidth = 2;
+// total width of field preferred in SLOG
+int o_prefwidth = WIDTH_SEAT * MAX_CLI_SEATS + (MAX_CLI_SEATS - 1);
 
 int o_seats;
 int o_workers;
@@ -64,43 +77,57 @@ static const wchar_t* usage = L"usage: server [option]... seats threads time\n"
 	"  -c, --client-max=N    Set MAX_CLI_SEATS to N\n"
 	"\n";
 
-/**
- * Free all resources allocated to contain options by parse_args.
- */
 static void clear_options() {
 	// At the moment no end-of-program cleanup is required here.
 }
 
-/**
- * Prints the program's usage message to standard out.
- */
-void print_usage() {
+static void print_all() {
 	setlocale(LC_ALL, "");
 	wprintf(usage);
+	wprintf(version);
+	exit(EXIT_SUCCESS);
 }
 
-/**
- * Prints the program version message to standard out.
- */
-void print_version() {
+static void print_usage() {
+	setlocale(LC_ALL, "");
+	wprintf(usage);
+	exit(EXIT_SUCCESS);
+}
+
+static void print_version() {
 	setlocale(LC_ALL, "");
 	wprintf(version);
+	exit(EXIT_SUCCESS);
 }
 
-/**
- * Prints the incorrect number of positional arguments error message.
- */
-void print_numpositional(int n) {
+static void print_numpositional(int n) {
 	setlocale(LC_ALL, "");
-	wprintf(L"Error: Expected 3 positional arguments, but got %d.\n%S", n, usage);
+	wprintf(L"server: Error: Expected 3 positional arguments, but got %d.\n%S", n, usage);
+	exit(EXIT_SUCCESS);
 }
 
-/**
- * Prints the invalid single positional argument error message.
- */
-void print_badpositional(int i) {
+static void print_badpositional(int i) {
 	setlocale(LC_ALL, "");
-	wprintf(L"Error: Positional argument #%d is invalid.\n%S", i, usage);
+	wprintf(L"server: Error: Positional argument #%d is invalid.\n%S", i, usage);
+	exit(EXIT_SUCCESS);
+}
+
+static void print_badarg(const char* opt) {
+	setlocale(LC_ALL, "");
+	wprintf(L"server: Error: Bad argument for options %s.\n%S", opt, usage);
+	exit(EXIT_SUCCESS);
+}
+
+static int parse_int(const char* str, int* store) {
+	char* endp;
+	long result = strtol(str, &endp, 10);
+
+	if (endp == str || errno == ERANGE || result >= INT_MAX || result <= INT_MIN) {
+		return 1;
+	} else {
+		*store = (int)result;
+		return 0;
+	}
 }
 
 /**
@@ -112,9 +139,7 @@ int parse_args(int argc, char** argv) {
 
 	// If there are no args, print usage and version messages and exit
 	if (argc == 1) {
-		print_usage();
-		print_version();
-		return -1;
+		print_all();
 	}
 
 	// Standard getopt_long Options Loop
@@ -147,44 +172,61 @@ int parse_args(int argc, char** argv) {
 			o_show_version = true;
 			break;
 		case SEATSMAX_FLAG:
-			o_max_seats = strtol(optarg, NULL, 0);
+			if (parse_int(optarg, &o_max_seats) != 0) {
+				print_badarg(SEATSMAX_LFLAG);
+			}
 			break;
 		case CLIENTMAX_FLAG:
-			o_max_client = strtol(optarg, NULL, 0);
+			if (parse_int(optarg, &o_max_client) != 0) {
+				print_badarg(CLIENTMAX_LFLAG);
+			}
 			break;
 		case '?':
 		case ':':
-		default:
-			// getopt_long already printed an error message.
+		default: // getopt_long already printed an error message.
 			print_usage();
-			return -1;
 		}
 	} // End [Options Loop] while
 
 	if (o_show_help || o_show_usage) {
 		print_usage();
-		return -1;
 	}
 
 	if (o_show_version) {
 		print_version();
-		return -1;
 	}
 
 	// Exactly 3 positional parameters are expected
 	int num_positional = argc - optind;
 
 	if (num_positional == 3) {
-		o_seats   = strtol(argv[optind++], NULL, 10);
-		o_workers = strtol(argv[optind++], NULL, 10);
-		o_time    = strtol(argv[optind++], NULL, 10);
-		// TODO: Check errno after each call
+		if (parse_int(argv[optind++], &o_seats) != 0) {
+			print_badpositional(1);
+		}
+		if (parse_int(argv[optind++], &o_workers) != 0) {
+			print_badpositional(2);
+		}
+		if (parse_int(argv[optind++], &o_time) != 0) {
+			print_badpositional(3);
+		}
+		if (o_seats > o_max_seats || o_seats <= 0) {
+			print_badpositional(1);
+		}
+		if (o_workers <= 0) {
+			print_badpositional(2);
+		}
+		if (o_time <= 0) {
+			print_badpositional(3);
+		}
 	} else {
 		print_numpositional(num_positional);
-		return -1;
 	}
 
-	atexit(clear_options);
+	o_twidth = (int)fmax(2.0, floor(log10(o_workers) + 1.0));
+	o_nwidth = (int)fmax(2.0, floor(log10(o_max_client) + 1.0));
+	o_seatwidth = (int)fmax(o_seatwidth, floor(log10(o_seats) + 1.0));
+    o_prefwidth = o_seatwidth * o_max_client + (o_max_client - 1);
 
+	atexit(clear_options);
 	return 0;
 }

@@ -6,51 +6,22 @@
 #include "fifos.h"
 #include "log.h"
 
-#include <stdio.h>
-
-int fifo_read_loop() {
-	while (1) {
-		const char* message;
-		int s = read_fifo_requests(&message);
-
-		if (s == 0) {
-			printf("message. %s\n", message);
-			write_message(message);
-		} else {
-			printf("error: %d\n", s);
-			if (alarm_timeout()) {
-				return 0;
-			}
-		}
-	}
-}
+#include <stdlib.h>
 
 int main(int argc, char** argv) {
-	int s = 0;
+	parse_args(argc, argv);
+	set_signal_handlers();
 
-	s = parse_args(argc, argv);
-	if (s != 0) return 0;
+	clear_client_files();
+	open_slog();
 
-	s = open_slog();
-	if (s != 0) return s;
-
-	s = open_fifo_requests();
-	if (s != 0) return s;
-
-	s = set_signal_handlers();
-	if (s != 0) return s;
-
-	setup_queue();
 	setup_seats();
+	setup_queue();
 	launch_workers();
 	set_alarm();
 
-	printf("Server started...\n");
-
+	open_fifo_requests();
 	fifo_read_loop();
 
-	printf("Server exiting...\n");
-
-	terminate_workers();
-	return 0;
+	exit(EXIT_SUCCESS);
 }

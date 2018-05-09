@@ -3,7 +3,7 @@ OBJECTS = main.o options.o wthreads.o seats.o queue.o \
 ONAME = server
 
 all: $(OBJECTS)
-	$(CC) $(CFLAGS) $(WARNS) $(INCLUDES) -o $(ONAME) $(LDFLAGS) $(OBJECTS)
+	$(CC) $(WARNS) $(INCLUDES) -o $(ONAME) $(OBJECTS) $(LDFLAGS)
 	@rm -f $(OBJECTS)
 
 %.o: %.c

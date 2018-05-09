@@ -3,6 +3,4 @@
 
 int launch_workers();
 
-int terminate_workers();
-
 #endif // WORKERS_H___

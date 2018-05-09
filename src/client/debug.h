@@ -1,9 +1,8 @@
 #ifndef DEBUG_H___
 #define DEBUG_H___
 
-// ** Print debugging info
-#define PDEBUG 1
 // ** Disable assertions
+#define PDEBUG 1
 //#define NDEBUG
 
 #include <assert.h>

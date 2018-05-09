@@ -12,6 +12,15 @@
 
 
 
+// <!--- REQUIRED MACROS
+// Register widths
+#define WIDTH_PID        5
+#define WIDTH_XXNN       5
+#define WIDTH_SEAT       4
+// ----> END OF REQUIRED MACROS
+
+
+
 // <!--- GENERAL OPTIONS
 // Show help/usage message and exit
 #define HELP_FLAG 'h'
@@ -41,6 +50,15 @@ extern int o_sanitize;
 
 
 
+// <!--- COMPUTED GLOBALS
+extern int o_seatwidth;
+extern int o_pidwidth;
+extern int o_xwidth;
+extern int o_nwidth;
+// ----> END OF COMPUTED GLOBALS
+
+
+
 // <!--- CLIENT POSITIONAL ARGUMENTS
 // (POS #1) [REQUIRED] The client's wait time, in seconds
 extern int o_time;
@@ -49,7 +67,7 @@ extern int o_time;
 extern int o_number;
 
 // (POS #3) [REQUIRED] The client's preference list
-extern char* o_preferred;
+extern const char* o_preferred;
 // ----> END OF CLIENT POSITIONAL ARGUMENTS
 
 

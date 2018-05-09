@@ -13,21 +13,21 @@
 
 
 // <!--- REQUIRED MACROS
-// Number of room seats available.
+// Maximum value of the seats argument
 // This can be redefined by command line option -s, --seats-max
 #define MAX_ROOM_SEATS   9999
 
 // Maximum number of seats that may be requested by one single client.
 // This can be redefined by the command line option -c, --client-max
-#define MAX_CLI_SEATS    99
+#define MAX_CLI_SEATS    15
 
 // Register widths
 #define WIDTH_PID        5
-#define WIDTH_XXNN       5
 #define WIDTH_SEAT       4
 
 // Delay for bookSeat and friends
-#define DELAY()
+#include <time.h>
+#define DELAY() do { nanosleep(&(struct timespec){.tv_sec = 0, .tv_nsec = 2e8}, NULL); } while (0)
 // ----> END OF REQUIRED MACROS
 
 
@@ -65,9 +65,18 @@ extern int o_max_client;
 
 
 
+// <!--- COMPUTED GLOBALS
+extern int o_twidth;
+extern int o_seatwidth;
+extern int o_pidwidth;
+extern int o_nwidth;
+extern int o_prefwidth;
+// ----> END OF COMPUTED GLOBALS
+
+
+
 // <!--- SERVER POSITIONAL ARGUMENTS
-// (POS #1) [REQUIRED] The number of seats.
-// This means the seat numbers are [1...o_seats].
+// (POS #1) [REQUIRED] The number of seats. This means the seat numbers are [1...o_seats].
 extern int o_seats;
 
 // (POS #2) [REQUIRED] The number of threads (workers) to launch

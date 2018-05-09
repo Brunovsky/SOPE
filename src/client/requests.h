@@ -42,12 +42,12 @@ typedef struct {
     int error;
 } request_t;
 
-void free_request(request_t* request);
+extern request_t* request;
 
-request_t* make_request();
+int make_request();
 
 const char* error_string(int error);
 
-int parse_answer(request_t* request);
+int parse_answer();
 
 #endif // REQUESTS_H___

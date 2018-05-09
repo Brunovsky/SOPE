@@ -5,6 +5,8 @@
 
 int open_slog();
 
+int clear_client_files();
+
 char* stringify_intarray(const int* array, int size);
 
 void slog_worker_open(int id);

@@ -79,7 +79,12 @@ static inline void make_fifoname(request_t* request) {
 }
 
 static int validate_request(request_t* request) {
-    if (request->total < request->number) {
+    if (request->number > o_max_client || request->total > o_max_client) {
+        request->error = MAX;
+        return 1;
+    }
+
+    if (request->total < request->number || request->number == 0) {
         request->error = NST;
         return 1;
     }
@@ -91,11 +96,6 @@ static int validate_request(request_t* request) {
             request->error = IID;
             return 1;
         }
-    }
-
-    if (request->number > o_max_client) {
-        request->error = MAX;
-        return 1;
     }
 
     return 0;
@@ -162,7 +162,7 @@ static int parse_message(request_t* request) {
             regfree(&bad);
             return 1;
         } else {
-            request->rest = request->message;
+            request->rest = strdup(request->message);
             request->error = BAD;
 
             regfree(&bad);

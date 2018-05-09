@@ -8,7 +8,7 @@
 #include <pthread.h>
 #include <semaphore.h>
 
-#define QUEUE_SIZE 16
+#define QUEUE_SIZE 1
 
 typedef pthread_mutex_t mutex_t;
 
@@ -136,7 +136,7 @@ static void init_queue() {
 }
 
 void setup_queue() {
-    if (queue_initialised) free_queue();
+    if (queue_initialised) return;
 
     init_queue();
     
