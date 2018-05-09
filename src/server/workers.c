@@ -57,8 +57,8 @@ static int answer_client(const request_t* request) {
 static void free_reserved_seats(request_t* request, int total_reserved) {
     for (int i = 0; i < total_reserved; ++i) {
         int seat = request->reserved[i];
-        int ret = free_seat(seat);
-        assert(ret == SEAT_FREED);
+        seat = free_seat(seat);
+        assert(seat == SEAT_FREED); // no warning for unused var
     }
 }
 
@@ -78,10 +78,20 @@ static int process_request(request_t* request) {
         int seat = request->preferred[i];
         client_t client = request->client;
 
-        if (is_seat_free(seat)) {
-            switch (book_seat(seat, client)) {
-            case SEAT_BOOKED:
-                request->reserved[reserved_so_far++] = seat;
+        switch (is_seat_free(seat)) {
+            case SEAT_IS_FREE:
+                switch (book_seat(seat, client)) {
+                case SEAT_BOOKED:
+                    request->reserved[reserved_so_far++] = seat;
+                    break;
+                case SEAT_FULL_HOUSE:
+                    fullhouse = true;
+                    break;
+                case SEAT_IS_RESERVED:
+                default:
+                    --leeway;
+                    break;
+                }
                 break;
             case SEAT_FULL_HOUSE:
                 fullhouse = true;
@@ -90,9 +100,6 @@ static int process_request(request_t* request) {
             default:
                 --leeway;
                 break;
-            }
-        } else {
-            --leeway;
         }
 
         // all reserved.

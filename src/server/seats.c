@@ -121,6 +121,18 @@ static inline void unlock_counter() {
     pthread_mutex_unlock(&reserved_mutex);
 }
 
+static int full_house() {
+    int ret;
+    
+    lock_counter();
+
+    ret = seats_reserved == o_seats;
+    
+    unlock_counter();
+    
+    return ret;
+}
+
 /**
  * REQUIRED
  * The entry point is is_seat_free, which takes hold of the seat's
@@ -139,7 +151,9 @@ static inline void unlock_counter() {
  */
 static int isSeatFree(Seat* seats, int seat_num) {
     int i = seat_num - 1;
-    int ret = !seats[i].reserved;
+    int ret = seats[i].reserved ? SEAT_IS_RESERVED : SEAT_IS_FREE;
+
+    if (ret == SEAT_IS_RESERVED && full_house()) ret = SEAT_FULL_HOUSE;
 
     DELAY();
 
@@ -200,14 +214,6 @@ static void freeSeat(Seat* seats, int seat_num) {
     DELAY();
 }
 
-int full_house() {
-    int ret;
-    lock_counter();
-    ret = seats_reserved == o_seats;
-    unlock_counter();
-    return ret;
-}
-
 int is_seat_free(int seat_num) {
     assert(is_valid_seat(seat_num));
 
@@ -258,7 +264,7 @@ int free_seat(int seat_num) {
         freeSeat(seats, seat_num);
         ret = SEAT_FREED;
     } else {
-        ret = SEAT_NOT_RESERVED;
+        ret = SEAT_IS_FREE;
     }
 
     unlock_seat(seat_num);
