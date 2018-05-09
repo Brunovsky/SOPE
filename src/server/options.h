@@ -27,7 +27,7 @@
 
 // Delay for bookSeat and friends
 #include <time.h>
-#define DELAY() do { nanosleep(&(struct timespec){.tv_sec = 0, .tv_nsec = 2e8}, NULL); } while (0)
+#define DELAY() do { nanosleep(&(struct timespec){.tv_sec = 0, .tv_nsec = 1e6}, NULL); } while (0)
 // ----> END OF REQUIRED MACROS
 
 

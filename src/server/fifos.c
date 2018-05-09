@@ -19,6 +19,7 @@ static bool requests_initialised = false;
 static bool requests_atexit_set = false;
 static FILE* requests_fifo = NULL;
 static int requests_no;
+static char* requests_read_buffer = NULL;
 
 static void destroy_requests() {
     int fd = open(REQUESTS_NAME, O_RDONLY | O_NONBLOCK);
@@ -34,6 +35,7 @@ static void close_fifo_requests() {
 
     fclose(requests_fifo);
     unlink(REQUESTS_NAME);
+    free(requests_read_buffer);
 
     requests_initialised = false;
 }
@@ -75,14 +77,16 @@ int open_fifo_requests() {
 }
 
 int read_fifo_requests(const char** message_p) {
-    char* buf = NULL;
+    requests_read_buffer = NULL;
     size_t n = 0;
-    ssize_t s = getline(&buf, &n, requests_fifo);
+    ssize_t s = getline(&requests_read_buffer, &n, requests_fifo);
     if (s <= 0 || errno == EINTR) {
-        free(buf);
+        free(requests_read_buffer);
+        requests_read_buffer = NULL;
         return errno;
     } else {
-        *message_p = buf;
+        *message_p = requests_read_buffer;
+        requests_read_buffer = NULL;
         return 0;
     }
 }

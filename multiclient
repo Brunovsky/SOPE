@@ -9,7 +9,7 @@ function waitenter {
 }
 
 function callvalgrind {
-    valgrind --quiet --tool=memcheck --leak-check=full --show-leak-kinds=all "$@"
+    valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all "$@"
 }
 
 function randint {
@@ -31,30 +31,7 @@ function randstring {
     echo $s
 }
 
-function callclient {
-    callvalgrind ./client "$1" "$2" "$3"
-}
-
 function launchclients {
-    # $1 - number of clients
-    # $2 - time
-    # $3 - 1..number
-    # $4 - 1..total
-    # $5 - 0..seat
-    local counter=$1
-    while [ $counter -gt 0 ]
-    do
-        local time=$2
-        local number=$(randint 0 $3)
-        local min=$(($number / 2))
-        local total=$(randint $min $4)
-        local string=$(randstring 0 $5 $total)
-        callclient "$time" "$number" "$string" >> out.txt 2>&1 &
-        ((counter--))
-    done
-}
-
-function launchclients-quick {
     # $1 - number of clients
     # $2 - time
     # $3 - 1..number
@@ -73,15 +50,37 @@ function launchclients-quick {
     done
 }
 
+function launchclients-valgrind {
+    # $1 - number of clients
+    # $2 - time
+    # $3 - 1..number
+    # $4 - 1..total
+    # $5 - 0..seat
+    local counter=$1
+    while [ $counter -gt 0 ]
+    do
+        local time=$2
+        local number=$(randint 0 $3)
+        local min=$(($number / 2))
+        local total=$(randint $min $4)
+        local string=$(randstring 0 $5 $total)
+        callvalgrind ./client "$time" "$number" "$string" >> out.txt 2>&1 &
+        ((counter--))
+    done
+}
+
 echo "$@"
 
+# clear out.txt from a previous call
 > out.txt
 
-if [[ "$1" = "quick" ]]; then
+if [[ "$1" = "valgrind" ]]; then
     shift
-    launchclients-quick "$1" "$2" "$3" "$4" "$5"
+    launchclients-valgrind "$1" "$2" "$3" "$4" "$5"
 else
     launchclients "$1" "$2" "$3" "$4" "$5"
 fi
+
+echo "Done"
 
 exit 0

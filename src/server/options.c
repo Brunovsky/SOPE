@@ -224,7 +224,6 @@ int parse_args(int argc, char** argv) {
 
 	o_twidth = (int)fmax(2.0, floor(log10(o_workers) + 1.0));
 	o_nwidth = (int)fmax(2.0, floor(log10(o_max_client) + 1.0));
-	o_seatwidth = (int)fmax(o_seatwidth, floor(log10(o_seats) + 1.0));
     o_prefwidth = o_seatwidth * o_max_client + (o_max_client - 1);
 
 	atexit(clear_options);
