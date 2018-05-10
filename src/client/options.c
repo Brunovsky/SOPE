@@ -17,7 +17,7 @@ int o_show_help = false; // h, help
 int o_show_usage = false; // usage
 int o_show_version = false; // V, version
 
-int o_sanitize = false; // sanitize
+int o_sanitize = true; // sanitize
 
 int o_seatwidth = WIDTH_SEAT; // width of field seat in CLOG, CBOOK.
 int o_pidwidth = WIDTH_PID; // width of field pid in CLOG

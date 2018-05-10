@@ -23,6 +23,7 @@ static bool ans_atexit_set = false;
 static FILE* ans_fifo = NULL;
 static const char* ans_name = NULL;
 static int ans_no;
+static char* ans_read_buffer = NULL;
 
 static inline void make_fifoname() {
     char* fifoname = malloc(16 * sizeof(char));
@@ -70,22 +71,25 @@ void close_fifo_ans() {
     fclose(ans_fifo);
     unlink(ans_name);
     free((char*)ans_name);
+    free(ans_read_buffer);
 
     ans_initialised = false;
 }
 
 int read_fifo_ans(const char** message_p) {
-    char* buf = NULL;
     size_t n = 0;
-
     errno = 0;
-    ssize_t s = getline(&buf, &n, ans_fifo); // blocks
+
+    ssize_t s = getline(&ans_read_buffer, &n, ans_fifo); // blocks
     if (s <= 0 || errno == EINTR) {
-        free(buf);
+        free(ans_read_buffer);
+        ans_read_buffer = NULL;
+        if (PDEBUG) printf("client %d no answer, exiting.\n", getpid());
         exit(EXIT_FAILURE);
     } else {
-        *message_p = buf;
-        if (PDEBUG) printf("client %d in: %s\n", getpid(), buf);
+        *message_p = ans_read_buffer;
+        if (PDEBUG) printf("client %d answer: %s\n", getpid(), ans_read_buffer);
+        ans_read_buffer = NULL;
         return 0;
     }
 }

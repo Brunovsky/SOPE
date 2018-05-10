@@ -19,15 +19,21 @@
 
 // Maximum number of seats that may be requested by one single client.
 // This can be redefined by the command line option -c, --client-max
-#define MAX_CLI_SEATS    15
+#define MAX_CLI_SEATS    20
 
 // Register widths
 #define WIDTH_PID        5
 #define WIDTH_SEAT       4
 
 // Delay for bookSeat and friends
+// This can be redefined by the command line option -d, --delay
 #include <time.h>
-#define DELAY() do { nanosleep(&(struct timespec){.tv_sec = 0, .tv_nsec = 1e6}, NULL); } while (0)
+#define DELAY() do { \
+        nanosleep(&(struct timespec) { \
+            .tv_sec = (o_delay / 1000), \
+            .tv_nsec = (o_delay * 1000000) % 1000000000 \
+        }, NULL); \
+    } while (0)
 // ----> END OF REQUIRED MACROS
 
 
@@ -61,6 +67,11 @@ extern int o_max_seats;
 #define CLIENTMAX_FLAG 'c'
 #define CLIENTMAX_LFLAG "client-max"
 extern int o_max_client;
+
+// Set DELAY() variables
+#define DELAY_FLAG 'd'
+#define DELAY_LFLAG "delay"
+extern int o_delay;
 // ----> END OF OTHER OPTIONS
 
 

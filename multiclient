@@ -45,7 +45,7 @@ function launchclients {
         local min=$(($number / 2))
         local total=$(randint $min $4)
         local string=$(randstring 0 $5 $total)
-        ./client "$time" "$number" "$string" >> out.txt 2>&1 &
+        ./client "$time" "$number" "$string" >> out.txt 2>&1 & disown
         ((counter--))
     done
 }
@@ -64,7 +64,7 @@ function launchclients-valgrind {
         local min=$(($number / 2))
         local total=$(randint $min $4)
         local string=$(randstring 0 $5 $total)
-        callvalgrind ./client "$time" "$number" "$string" >> out.txt 2>&1 &
+        callvalgrind ./client "$time" "$number" "$string" >> out.txt 2>&1 & disown
         ((counter--))
     done
 }

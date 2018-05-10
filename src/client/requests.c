@@ -93,7 +93,7 @@ int make_request() {
         request_atexit_set = true;
     }
 
-    if (PDEBUG) {
+    if (PDEBUG || o_sanitize) {
         int parse_s = parse_ints(request->rest, &request->preferred, &request->total);
         if (parse_s != 0) {
             printf("client %d: invalid preference list: %s\n", getpid(), o_preferred);

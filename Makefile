@@ -3,7 +3,7 @@
 CC = gcc
 INCLUDES = -I ./
 
-CFLAGS = -pthread -Og -g -march=native -lm
+CFLAGS = -pthread -O3 -march=native -lm
 
 LDFLAGS = -lm -pthread -lrt
 
