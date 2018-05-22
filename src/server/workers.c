@@ -15,7 +15,7 @@
 #include <stdbool.h>
 #include <regex.h>
 
-#define WORKER_EXIT_STRING "EXIT"
+#define WORKER_EXIT_STRING "WORKER_EXIT"
 
 static bool workers_running = false;
 static bool workers_atexit_set = false;
@@ -36,7 +36,7 @@ static int answer_client_success(const request_t* request) {
 static int answer_client_failure(const request_t* request) {
     char str[16];
 
-    sprintf(str, "%d\n", request->error);
+    sprintf(str, "ERROR %d\n", request->error);
 
     write_to_fifo(request->fifoname, str);
 

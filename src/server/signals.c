@@ -38,10 +38,11 @@ static void sighandler_pipe(int signum) {
 // SIGALRM
 static void sighandler_alarm(int signum) {
     if (PDEBUG) write(STDOUT_FILENO, str_alarm, strlen(str_alarm));
-    alarmed = 1;
+    exit(EXIT_SUCCESS);
 }
 
 // TODO: fix race condition in alarm vs getline
+// Fixed: call exit instead of checking alarm_timeout().
 
 /**
  * Set the process's signal handlers and overall dispositions,

@@ -32,6 +32,21 @@ static int queue_size = 0, queue_read_p = 0, queue_write_p = 0, queue_unread = 0
 static sem_t not_full_sem, not_empty_sem;
 static mutex_t read_access_mutex, write_access_mutex, unread_access_mutex;
 
+//  ___  ___  ___  ___
+//  nao cheio: 4 <----
+//  nao vazio: 0 <----
+
+//  ABC  ___  ___  ___
+//  nao cheio: 3 <----
+//  nao vazio: 1 <----
+
+//  ___  DEF  ___  ___
+
+//  ___  ___  GHI  ___
+
+
+
+
 static void free_queue() {
     if (queue_initialised) {
         sem_destroy(&not_full_sem);

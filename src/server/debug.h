@@ -2,7 +2,7 @@
 #define DEBUG_H___
 
 #define PDEBUG 0
-#define NDEBUG
+//#define NDEBUG
 
 #include <assert.h>
 

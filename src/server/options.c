@@ -57,7 +57,7 @@ static const struct option long_options[] = {
 };
 
 // enforce POSIX with +
-static const char* short_options = "+hVs:c:";
+static const char* short_options = "+hVd:s:c:";
 // x for no_argument, x: for required_argument, x:: for optional_argument
 
 static const wchar_t* version = L"FEUP SOPE 2017-2018\n"

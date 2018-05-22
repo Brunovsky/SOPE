@@ -80,7 +80,7 @@ int read_fifo_requests(const char** message_p) {
     size_t n = 0;
     errno = 0;
 
-    ssize_t s = getline(&requests_read_buffer, &n, requests_fifo);
+    ssize_t s = getline(&requests_read_buffer, &n, requests_fifo); // blocks
     if (s <= 0 || errno == EINTR || requests_read_buffer == NULL) {
         free(requests_read_buffer);
         requests_read_buffer = NULL;

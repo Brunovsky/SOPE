@@ -138,7 +138,7 @@ static int validate_success() {
 }
 
 static int validate_failure() {
-    static const char* const pattern = "^ *(-?[0-9]+) *$";
+    static const char* const pattern = "^ERROR *(-?[0-9]+) *$";
     regex_t regex;
     regcomp(&regex, pattern, REG_EXTENDED | REG_NEWLINE);
     regmatch_t match[2];

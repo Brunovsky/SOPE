@@ -1,13 +1,5 @@
 #!/bin/bash
 
-function waitenter {
-    echo
-    echo "Done."
-    echo
-    read key
-    echo
-}
-
 function callvalgrind {
     valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all "$@"
 }
@@ -42,7 +34,7 @@ function launchclients {
     do
         local time=$2
         local number=$(randint 0 $3)
-        local min=$(($number / 2))
+        local min=$(((2 * $number + 3) / 3))
         local total=$(randint $min $4)
         local string=$(randstring 0 $5 $total)
         ./client "$time" "$number" "$string" >> out.txt 2>&1 & disown
@@ -61,7 +53,7 @@ function launchclients-valgrind {
     do
         local time=$2
         local number=$(randint 0 $3)
-        local min=$(($number / 2))
+        local min=$(((2 * $number + 3) / 3))
         local total=$(randint $min $4)
         local string=$(randstring 0 $5 $total)
         callvalgrind ./client "$time" "$number" "$string" >> out.txt 2>&1 & disown

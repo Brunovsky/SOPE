@@ -14,7 +14,7 @@
 
 // <!--- REQUIRED MACROS
 // Maximum value of the seats argument
-// This can be redefined by command line option -s, --seats-max
+// This can be redefined by the command line option -s, --seats-max
 #define MAX_ROOM_SEATS   9999
 
 // Maximum number of seats that may be requested by one single client.
@@ -26,13 +26,13 @@
 #define WIDTH_SEAT       4
 
 // Delay for bookSeat and friends
-// This can be redefined by the command line option -d, --delay
+// This can be redefined by the command line option -d, --delay=ms
 #include <time.h>
-#define DELAY() do { \
-        nanosleep(&(struct timespec) { \
-            .tv_sec = (o_delay / 1000), \
-            .tv_nsec = (o_delay * 1000000) % 1000000000 \
-        }, NULL); \
+#define DELAY() do {                                      \
+        nanosleep(&(struct timespec) {                    \
+            .tv_sec = (o_delay / 1000),                   \
+            .tv_nsec = (o_delay * 1000000) % 1000000000   \
+        }, NULL);                                         \
     } while (0)
 // ----> END OF REQUIRED MACROS
 
@@ -68,7 +68,7 @@ extern int o_max_seats;
 #define CLIENTMAX_LFLAG "client-max"
 extern int o_max_client;
 
-// Set DELAY() variables
+// Set DELAY() variables. Only relevant is DELAY() is kept as is.
 #define DELAY_FLAG 'd'
 #define DELAY_LFLAG "delay"
 extern int o_delay;

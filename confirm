@@ -29,4 +29,6 @@ else
     echo "No"
 fi
 
+rm tmp.txt
+
 exit 0
