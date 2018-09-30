@@ -1,0 +1,100 @@
+/***
+ * SOPE GCC Basics
+ *
+ * Bruno Carvalho
+ *
+ */
+
+GCC = GNU Compiler Collection
+
+
+
+$ GCC, G++, Make $
+
+gcc (GNU C Compiler)
+g++ (GNU C++ Compiler)
+make (GNU Make utility, for C, C++, ...)
+
+
+Compilar C:
+gcc -Wall src.c -o src
+
+Compilar C++:
+g++ -Wall src.cpp -o src
+
+Executar:
+./src
+
+
+
+$ Header Files $
+
+Para programar em C, precisamos de header files que contêm definições
+de constantes e declarações de chamadas ao sistema ou à biblioteca da linguagem.
+
+Os includes standard estão  em /usr/include em Linux.
+
+É possível especificar outros diretórios onde devem ser procurados include files,
+para além dos diretórios standard, usando o switch de compilação -I
+
+gcc -I/.../include ...
+
+
+
+$ Library Files, Linking $
+
+Library (biblioteca) - coletânea de funções pré-compiladas que foram escritas de modo
+a serem reutilizáveis.
+
+As bibliotecas standard estão em /lib ou /usr/lib ou /usr/local/lib em Linux.
+
+Os nomes das bibliotecas standard começam sempre por lib. O resto do nome indica
+o tipo de biblioteca 
+	libc, biblioteca de C
+	libm, biblioteca de matemática
+
+A última parte do nome indica o tipo de biblioteca:
+	.a  (STATIC LINKED) biblioteca estática
+		Se houver vários programas que usem uma mesma função de uma biblioteca,
+		quando os programas estiverem a correr simultaneamente existirão várias
+		cópias da função em memória.
+	.so, .sa  (DYNAMIC LINKED) biblioteca partilhada
+		o código das funções da biblioteca pode ser partilhado por vários programas.
+		.so - shared object, .sa - shared archive
+	.dll - (LATE-BINDING DYNAMIC LINKED) dynamically linked library.
+		Must be loaded vi dlopen/dlsym.
+
+Default: dynamic link.
+
+
+
+$ Static Linking VS Dynamic Linking $
+
+
+$ Static $
+
+Provided by static libraries .a
+
+After the compilation of the source code, in the linking phase, the code specified in
+these libraries that is to be included in the executable is physically copied to the
+code of the executable that will be generated.
+In a sense, this duplicates the code, as the executable has its own
+little copy of the library functions that it needs to run.
+
+Statically-linked files are locked to the executable at link time and never change.
+
+
+$ Dynamic $
+
+After the compilation of the source code, in the linking phase, includes are verified
+but deferred: a pointer to the library being linked in (e.g. the name of the library)
+is stored in the executable and the contents of said file are not included.
+When the executable is ran, these dynamically linked files are brought in to the
+in-memory copy of the executable (not the one on disk), ready to be executed.
+
+Late-binding: the dynamically linked file is only brought into the in-memory copy
+of the executable when the function provided by it must be called.
+
+Dynamically-linked files are ferenced by an executable and can change
+just by replacing the file on the disk. This allows updates to functionality
+without having to re-link the code; the loader re-links every time you run it.

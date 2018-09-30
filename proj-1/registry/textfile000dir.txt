@@ -1,0 +1,72 @@
+    0.24 -    29301 - OPEN registry/textfile000dir.txt
+    0.38 -    29301 - BEGIN TRAVERSAL folder
+    0.46 -    29301 - OPEN folder/index.txt
+    0.59 -    29301 - CLOSE folder/index.txt
+    0.74 -    29301 - NEW PROCESS 29302
+    0.84 -    29301 - OPEN folder/4.txt
+    0.99 -    29302 - BEGIN TRAVERSAL folder/subfolder2
+    1.21 -    29302 - OPEN folder/subfolder2/5.txt
+    2.51 -    29301 - CLOSE folder/4.txt
+    2.55 -    29302 - CLOSE folder/subfolder2/5.txt
+    2.57 -    29301 - OPEN folder/0_ReadMe.txt
+    2.63 -    29302 - OPEN folder/subfolder2/6.txt
+    2.65 -    29301 - CLOSE folder/0_ReadMe.txt
+    2.70 -    29301 - OPEN folder/2.txt
+    4.27 -    29302 - CLOSE folder/subfolder2/6.txt
+    4.30 -    29301 - CLOSE folder/2.txt
+    4.34 -    29302 - OPEN folder/subfolder2/7.txt
+    4.35 -    29301 - OPEN folder/loremc.txt
+    4.80 -    29302 - CLOSE folder/subfolder2/7.txt
+    4.85 -    29302 - NEW PROCESS 29303
+    4.91 -    29302 - END TRAVERSAL folder/subfolder2
+    4.95 -    29303 - BEGIN TRAVERSAL folder/subfolder2/subfolder3
+    5.02 -    29303 - OPEN folder/subfolder2/subfolder3/8.txt
+    5.55 -    29303 - CLOSE folder/subfolder2/subfolder3/8.txt
+    5.57 -    29303 - OPEN folder/subfolder2/subfolder3/9.txt
+    6.00 -    29303 - CLOSE folder/subfolder2/subfolder3/9.txt
+    6.01 -    29303 - OPEN folder/subfolder2/subfolder3/lorem-ipsum-2.txt
+    7.60 -    29301 - CLOSE folder/loremc.txt
+    7.62 -    29301 - OPEN folder/3.txt
+    8.12 -    29301 - CLOSE folder/3.txt
+    8.15 -    29301 - OPEN folder/1.txt
+    8.68 -    29301 - CLOSE folder/1.txt
+    8.75 -    29301 - NEW PROCESS 29304
+    8.76 -    29301 - END TRAVERSAL folder
+    8.83 -    29304 - BEGIN TRAVERSAL folder/subfolder1
+    8.90 -    29304 - OPEN folder/subfolder1/10.txt
+    9.36 -    29304 - CLOSE folder/subfolder1/10.txt
+    9.38 -    29304 - OPEN folder/subfolder1/11.txt
+    9.87 -    29304 - CLOSE folder/subfolder1/11.txt
+    9.89 -    29304 - OPEN folder/subfolder1/12.txt
+   10.40 -    29304 - CLOSE folder/subfolder1/12.txt
+   10.42 -    29304 - OPEN folder/subfolder1/dummy.txt
+   10.47 -    29304 - CLOSE folder/subfolder1/dummy.txt
+   10.48 -    29304 - END TRAVERSAL folder/subfolder1
+   10.48 -    29304 - EXIT PROCESS 29304
+   10.49 -    29304 - CLOSE registry/textfile000dir.txt
+   10.62 -    29301 - SIGNAL IN SIGCHLD
+   10.63 -    29301 - WAITPID (PROCESS 29304) (STATUS 0x0000) (LEFT: 1)
+   20.61 -    29303 - CLOSE folder/subfolder2/subfolder3/lorem-ipsum-2.txt
+   20.64 -    29303 - OPEN folder/subfolder2/subfolder3/lorem-ipsum-3.txt
+   34.76 -    29303 - CLOSE folder/subfolder2/subfolder3/lorem-ipsum-3.txt
+   34.79 -    29303 - OPEN folder/subfolder2/subfolder3/lorem-ipsum-4.txt
+   60.61 -    29303 - CLOSE folder/subfolder2/subfolder3/lorem-ipsum-4.txt
+   60.66 -    29303 - OPEN folder/subfolder2/subfolder3/lorem-ipsum-5.txt
+   74.56 -    29303 - CLOSE folder/subfolder2/subfolder3/lorem-ipsum-5.txt
+   74.59 -    29303 - OPEN folder/subfolder2/subfolder3/lorem-ipsum-6.txt
+   90.47 -    29303 - CLOSE folder/subfolder2/subfolder3/lorem-ipsum-6.txt
+   90.52 -    29303 - OPEN folder/subfolder2/subfolder3/lorem-ipsum.txt
+   91.73 -    29303 - CLOSE folder/subfolder2/subfolder3/lorem-ipsum.txt
+   91.79 -    29303 - OPEN folder/subfolder2/subfolder3/words.txt
+   91.82 -    29303 - CLOSE folder/subfolder2/subfolder3/words.txt
+   91.83 -    29303 - END TRAVERSAL folder/subfolder2/subfolder3
+   91.84 -    29303 - EXIT PROCESS 29303
+   91.85 -    29303 - CLOSE registry/textfile000dir.txt
+   92.05 -    29302 - SIGNAL IN SIGCHLD
+   92.06 -    29302 - WAITPID (PROCESS 29303) (STATUS 0x0000) (LEFT: 0)
+   92.09 -    29302 - EXIT PROCESS 29302
+   92.09 -    29302 - CLOSE registry/textfile000dir.txt
+   92.18 -    29301 - SIGNAL IN SIGCHLD
+   92.19 -    29301 - WAITPID (PROCESS 29302) (STATUS 0x0000) (LEFT: 0)
+   92.21 -    29301 - EXIT PROCESS 29301
+   92.21 -    29301 - CLOSE registry/textfile000dir.txt

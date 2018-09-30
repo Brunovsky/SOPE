@@ -1,0 +1,371 @@
+/***
+ * SOPE Teoria dos Sistemas Operativos #1
+ *
+ * Bruno Carvalho
+ *
+ */
+
+
+$$ Conceitos $$
+
+> Kernel
+	Core do Sistema Operativo. Contém o programa init do sistema operativo,
+	o código das várias system calls, e device drivers internas e básicas.
+
+> Device Drivers
+	Coleção de códigos e programas que fornecem a interface de mais baixo nível
+	com os dispositivos de I/O para os programas.
+	Podem fazer parte do kernel ou não.
+
+> File
+	Coleção de informação relacionada entre si. A unidade lógica mais básica
+	de armazenamento de informação coletiva.
+
+> Folder
+	Repositório contendo vários files e folders.
+
+> Filesystem
+	Estrutura de files de um sistema operativos.
+
+> Program
+	Ficheiro no disco contendo código (executável ou não).
+
+> Process
+	Um programa em execução pelo processador.
+	Mais a coleção de estruturas de dados e recursos do Sistema Operativo detidos
+	por um programa quando está a ser executado.
+
+> Shell
+	Interpretador de comandos dados ao sistema operativo.
+	Normalmente não faz parte do kernel do sistema operativo.
+
+> System call
+	Um pedido de serviços ao sistema operativo feito por um programa.
+	A cada chamada corresponde uma rotina da biblioteca do sistema.
+	Um system call coloca os parâmetros da chamada ao sistema em locais específicos,
+	como registos do processador, e executa uma instrução TRAP que passa o controlo
+	ao sistema operativo.
+	Este então lê o que está guardado nos registos e executa a devida chamada de sistema.
+
+
+
+$ System call $
+	1. Programa preenche registos do processador com os dados necessários,
+	 incluindo o código binário da system call.
+	2. O programa executa TRAP, uma interrupção gerada por software que retorna o
+	 controlo ao sistema operativo.
+	3. O sistema operativo determina o nº do serviço lendo os registos do processador.
+	4. O serviço é localizado e executado de acordo com os dados fornecidos.
+	5. O sistema operativo retorna o controlo ao programa do utilizador.
+
+
+
+> User Program / Application
+	Um programa apenas com privilégios de utilizador, não tendo acesso
+	a serviços privilegiados do kernel.
+
+> Kernel Program
+	Um programa com privilégios de sistema operativo (kernel), tendo acesso
+	a todos os serviços de hardware.
+
+Programas podem ter privilégios de kernel parcial, naturalmente...
+
+
+
+$ Evolução dos sistemas operativos $
+    Processamento em série
+      Single Core.
+        O processo seguinte só pode ser definido
+        quando o processo a correr terminar.
+        Processamento em Shells e Command Lines.
+
+    Processamento em lote (batch)
+      Single Core.
+        Vários processos podem ser passados para o
+        sistema operativo para este passar em sequência
+        para o CPU.
+        Scripts para Shells e Command Lines.
+      Spooling (Simultaneous Peripheral Operations On-Line)
+        Forma de buffering: usar discos para guardar temp. I/O.
+        Permite sobrepor a fase de cálculo de um processo com a fase de I/O de outro.
+
+    Multiprogramação / Tempo partilhado (Multitasking, Time-sharing)
+      Single Core.
+        Multiple processes may run at the same time.
+        Each process is given a share of the CPU's time to execute
+        instructions, then being interrupted and put on hold so
+        another process may continue execution. This switcheroo
+        happens multiple times per second.
+      I/O Queueing
+        Quando um programa fica à espera de um operação de I/O,
+        outro programa pode ser executado, mesmo que queira aceder ao mesmo
+        dispositivo de I/O.
+    Requer do OS:
+        Escalonamento do CPU
+        	É o sistema que escolhe qual o processo que vai executar.
+        Gestão de memória
+        	Alocar memória para os diferentes processos.
+        Gestão de I/O
+        	Controlar o acesso aos dispositivos de I/O.
+        Proteção
+        	Sem conflitos entre processos no acesso às I/O.
+
+    Multiprocessamento
+      Multi Core.
+        Time-sharing aplicado a processadores com mais do que um core,
+        podendo executar v+arios processos em paralelo.
+
+    Sistemas distribuídos
+
+    Sistemas de tempo-real
+
+
+
+> Controlador DMA
+	Controlador de Acesso Direto à Memória.
+
+
+
+$ Proteção Hardware $
+    O OS deve impedir que um programa incorreto ou "mal intencionado"
+    impeça os outros programas de executar.
+    Alguns erros de programação são detetados pelo hardware.
+    Estes erros devem ser tratados pelo OS.
+
+    Duplo modo de operação:
+    	User mode
+    	Kernel mode
+
+    Proteção I/O:
+    	Processos User mode não conseguem fazer I/O diretamente,
+    	só através do OS.
+
+    Proteção de Memória:
+    	Proteção da área de memória do OS e dos utilizador feita
+    	por registos especiais.
+
+    Proteção do Processador:
+    	Temporizador impede que uma aplicação tome conta do
+    	processador indefinidamente.
+
+
+
+$ Requisitos Hardware para Multiprogramação $
+	Um OS com multiprogramação necessita que o Hardware suporte:
+		Temporizador
+		Hardware de DMA (Controlador de Acesso Direto à Memória)
+		Mecanismo de interrupções com prioridades
+		Duplo modo de operação do processador
+		Mecanismo de proteção de memória
+		Mecanismo de atribuição dinâmica de endereços
+		...
+
+
+
+$ Pontos de Vista de um OS $
+	> Serviços que fornece
+	> Interface que disponibiliza para os seus serviços
+	 para os utilizadores e programadores
+	> Os seus componentes e interligações
+
+	Componentes:
+	Gestão de processos
+	Gestão da memória principal
+	Gestão da memória secundária
+	Gestão de ficheiros, sistema de ficheiros
+	Gestão de I/O
+	Gestão de rede
+	Sistema de proteção/segurança
+
+
+
+$ Estrutura de um OS $
+	Monolítica (primeiros OSs)
+		Não há estruturação.
+		O OS é escrito como um conjunto de procedimentos
+		em que cada um dos quais pode chamar qualquer outro.
+		Há uma pequena estruturação: MS-DOS
+			Proc principal > Procs de serviço > Procs utilitários
+						  Executam chamadas ao sys   Ajudam os procs de serviço
+		Dificuldades:
+			difícil de compreender
+			difícil de modificar
+			pouco fiável, pois um erro de execução inesperado em qualquer parte
+			crasha o sistema.
+
+	Estrutura em Camadas
+		O OS é dividido num certo número de camadas cada qual construída
+		por cima da anterior.
+		Camada 0 - hardware
+		Camadas superiores - interface com o user
+
+		Modularidade:
+		  Cada camada especifica a sua funcionalidade e caraterísticas.
+		  É possível alterar a estrutura interna de cada camada desde que
+		a interface com as outras camadas se mantenha inalterada.
+		  Cada camada só usa funções e serviços das camadas inferiores.
+		  Cada camada apenas tem acesso à interface de camadas inferiores,
+		  e não à sua implementação.
+
+		Dificuldades:
+			definição adequeada das camadas
+				porque cada camada só deveria poder usar as funções
+				do nível inferior, mas...
+				duas camadas que precisam de utilizar as interfaces uma
+				da outra deverão estar no mesmo nível. Isto pode resultar
+				em poucos níveis de camadas, e retornamos a uma estrutura
+				monolítica.
+			menor eficiência
+				vários níveis de abstração implicam execução de várias
+				camadas de código "irrelevante"...
+
+	Estrutura baseada em microkernel
+		Tendência nos OSs modernos:
+		Deslocar o código para as camadas superiores,
+		deixando um kernel mínimo.
+		O kernel implementa a funcionalidade mínima referente a
+		gestão básica de CPU
+		gestão de memória
+		suporte de I/O
+		comunicação entre processos
+
+		A restante funcionalidade do OS é implementada em procedimentos
+		de sistema que correm em modo de user; estes processos comunicam
+		entre si através de mensagens (modelo cliente-servidor).
+
+		Exemplos:
+			Hydra (CMU, 1970)
+			Mach (CMU), Chorus (Unix), Minix
+
+		Windows NT - microkernel modificado.
+			Ao contrário de uma arquitetura microkernel "pura" muitas
+			das funções de sistema fora do microkernel executam em modo
+			kernel, por razões de performance.
+
+
+
+$ Estrutura Microkernel $
+
+User mode: Processos de user + Processos de sistema
+Kernel mode: Processos do microkernel
+
+Microkernel {
+	proteção
+	controlo do processador
+	gestão de memória virtual
+	comunicação
+}
+
+
+
+$ Arquitetura Windows NT $
+
+							OS/2 Application
+							POSIX Application
+							Win32 Application
+	_______________________________^_________
+	|                   |          |         |
+	|                   |                    |
+	|    Workstation    |        OS/2        |
+	|      System       |                    |
+	|                   |        POSIX       |
+	|      Server      <->                   |
+	|      Service      |        Win32       |
+	|                   |                    |
+	|     Security      |                    |
+	|                   |                    |
+	|Integral susbsys   |  Environment subsys|
+	------------------------------------------
+USER_MODE_____________________________________
+-----------------------------------------------
+KERNEL_MODE___________________________________
+	| --------- Executive Services --------  |
+	|                                        |
+	|                                        |
+	| Process      PnP      Power    Window  |
+	| Manager    Manager   Manager   Manager |
+	|                                  GDI   |
+	|                                        |
+	|                                        |
+	|   I/O      Security    IPC     Virtual |
+	| Manager    Monitor   Manager   Memory  |
+	|                                Manager |
+	|                                  VMM   |
+	|                                        |
+	|           - Object Manager -           |
+	|                                        |
+	|Executive                               |
+    |________________________________________|
+
+	- Kernel mode drivers -    - Microkernel -
+
+	------- Hardware Abstraction Layer -------
+	--------------------|---------------------
+	---------------- Hardware ----------------
+
+
+
+$ Arquitetura Unix (Bach) $
+
+	             User Programs
+	                         Libraries
+USER_MODE
+---------------------------------------------------------
+KERNEL_MODE
+               System Call Interface
+
+	________________________
+	|                      |     Process    - Inter-process communication
+	|    File Subsystem    | <-> Control    - Scheduler
+	|______________________|     Subsystem  - Memory management
+					|
+				Buffer cache
+	________________|________
+	|-- character | block --|
+	|--- Device Drivers ----|
+	-------------|----------------------------
+	------------ Hardware Control ------------
+	--------------------|---------------------
+	---------------- Hardware ----------------
+
+
+
+$ Arquitetura Android $
+
+		---- Applications ----
+		---- Application Framework --------------------
+		|                                             |
+		| Activity Manager         Package Manager    |
+		| Window Manager           Telephony Manager  |
+		| Content Providers        Resource Manager   |
+		| View System              Location Manager   |
+		| Notification System      XMP P Service      |
+		|_____________________________________________|
+		---- Libraries -------------------------------------------
+		|                                                        |
+		| Surface Manager      FreeType     - Android Runtime -  |
+		| Media Framework      WebKit          Core Libraries    |
+		| SQ Lite              SGL, SSL        Dalvik Virtual    |
+		| Open GL/ES           Libc              Machine         |
+		|________________________________________________________|
+		---- Linux Kernel --------------------------------
+		|                                                |
+		| Display Driver              USB Driver         |
+		| Camera Driver               Keypad Driver      |
+		| Bluetooth Driver            Wifi Driver        |
+		| Rash Memory Driver          Audio Driver       |
+		| Binder (IPC) Driver         Power Management   |
+		|________________________________________________|
+
+
+
+$ OS Topics $
+
+	Process Description and Control
+	Scheduling
+	Concurrency
+	Memory Management
+	I/O Management
+	File Management
+  X Security
+  X Networking

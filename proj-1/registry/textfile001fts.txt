@@ -1,0 +1,97 @@
+    0.25 -    29352 - T  29352 - OPEN registry/textfile001fts.txt
+    0.38 -    29352 - BEGIN TRAVERSAL OF ALL FILES
+    0.62 -    29352 - T  29353 - NEW
+    0.68 -    29352 - T  29355 - NEW
+    0.68 -    29352 - T  29356 - NEW
+    0.72 -    29352 - T  29354 - NEW
+    0.97 -    29352 - T  29353 - OPEN folder/0_ReadMe.txt
+    0.99 -    29352 - T  29357 - NEW
+    0.98 -    29352 - T  29355 - OPEN folder/2.txt
+    0.98 -    29352 - T  29356 - OPEN folder/3.txt
+    1.02 -    29352 - T  29354 - OPEN folder/1.txt
+    1.08 -    29352 - T  29358 - NEW
+    1.26 -    29352 - T  29357 - OPEN folder/4.txt
+    1.29 -    29352 - T  29353 - CLOSE folder/0_ReadMe.txt
+    1.34 -    29352 - T  29353 - FINISHED
+    1.51 -    29352 - T  29359 - NEW
+    1.52 -    29352 - T  29358 - OPEN folder/index.txt
+    1.59 -    29352 - T  29359 - OPEN folder/loremc.txt
+    1.73 -    29352 - T  29360 - NEW
+    1.84 -    29352 - T  29361 - NEW
+    1.82 -    29352 - T  29358 - CLOSE folder/index.txt
+    1.89 -    29352 - T  29362 - NEW
+    1.90 -    29352 - T  29358 - FINISHED
+    1.97 -    29352 - T  29361 - OPEN folder/subfolder1/11.txt
+    2.26 -    29352 - T  29360 - OPEN folder/subfolder1/10.txt
+    2.03 -    29352 - T  29363 - NEW
+    2.58 -    29352 - T  29365 - NEW
+    2.62 -    29352 - T  29366 - NEW
+    2.65 -    29352 - T  29364 - NEW
+    3.50 -    29352 - T  29356 - CLOSE folder/3.txt
+    3.54 -    29352 - T  29356 - FINISHED
+    3.60 -    29352 - T  29367 - NEW
+    3.66 -    29352 - T  29367 - OPEN folder/subfolder2/subfolder3/8.txt
+    3.69 -    29352 - T  29368 - NEW
+    3.87 -    29352 - T  29365 - OPEN folder/subfolder2/6.txt
+    3.91 -    29352 - T  29362 - OPEN folder/subfolder1/12.txt
+    3.96 -    29352 - T  29366 - OPEN folder/subfolder2/7.txt
+    3.98 -    29352 - T  29354 - CLOSE folder/1.txt
+    4.02 -    29352 - T  29354 - FINISHED
+    4.04 -    29352 - T  29363 - OPEN folder/subfolder1/dummy.txt
+    4.27 -    29352 - T  29357 - CLOSE folder/4.txt
+    4.31 -    29352 - T  29357 - FINISHED
+    4.48 -    29352 - T  29360 - CLOSE folder/subfolder1/10.txt
+    4.52 -    29352 - T  29360 - FINISHED
+    4.89 -    29352 - T  29355 - CLOSE folder/2.txt
+    4.93 -    29352 - T  29355 - FINISHED
+    4.95 -    29352 - T  29369 - NEW
+    5.00 -    29352 - T  29369 - OPEN folder/subfolder2/subfolder3/lorem-ipsum-2.txt
+    5.34 -    29352 - T  29361 - CLOSE folder/subfolder1/11.txt
+    5.38 -    29352 - T  29361 - FINISHED
+    5.84 -    29352 - T  29368 - OPEN folder/subfolder2/subfolder3/9.txt
+    5.92 -    29352 - T  29363 - CLOSE folder/subfolder1/dummy.txt
+    5.95 -    29352 - T  29363 - FINISHED
+    6.93 -    29352 - T  29367 - CLOSE folder/subfolder2/subfolder3/8.txt
+    6.97 -    29352 - T  29367 - FINISHED
+    7.56 -    29352 - T  29365 - CLOSE folder/subfolder2/6.txt
+    7.60 -    29352 - T  29365 - FINISHED
+    7.81 -    29352 - T  29364 - OPEN folder/subfolder2/5.txt
+    7.89 -    29352 - T  29370 - NEW
+    8.10 -    29352 - T  29370 - OPEN folder/subfolder2/subfolder3/lorem-ipsum-3.txt
+    8.22 -    29352 - T  29362 - CLOSE folder/subfolder1/12.txt
+    8.26 -    29352 - T  29362 - FINISHED
+    9.45 -    29352 - T  29366 - CLOSE folder/subfolder2/7.txt
+    9.49 -    29352 - T  29366 - FINISHED
+   10.49 -    29352 - T  29371 - NEW
+   10.59 -    29352 - T  29371 - OPEN folder/subfolder2/subfolder3/lorem-ipsum-4.txt
+   10.68 -    29352 - T  29373 - NEW
+   10.84 -    29352 - T  29373 - OPEN folder/subfolder2/subfolder3/lorem-ipsum-6.txt
+   10.73 -    29352 - END TRAVERSAL OF ALL FILES
+   10.56 -    29352 - T  29372 - NEW
+   11.52 -    29352 - T  29372 - OPEN folder/subfolder2/subfolder3/lorem-ipsum-5.txt
+   12.48 -    29352 - T  29364 - CLOSE folder/subfolder2/5.txt
+   12.54 -    29352 - T  29364 - FINISHED
+   12.66 -    29352 - T  29374 - NEW
+   12.75 -    29352 - T  29374 - OPEN folder/subfolder2/subfolder3/lorem-ipsum.txt
+   12.88 -    29352 - T  29368 - CLOSE folder/subfolder2/subfolder3/9.txt
+   12.93 -    29352 - T  29368 - FINISHED
+   21.06 -    29352 - T  29374 - CLOSE folder/subfolder2/subfolder3/lorem-ipsum.txt
+   21.08 -    29352 - T  29375 - NEW
+   21.15 -    29352 - T  29374 - FINISHED
+   21.22 -    29352 - T  29375 - OPEN folder/subfolder2/subfolder3/words.txt
+   21.38 -    29352 - T  29375 - CLOSE folder/subfolder2/subfolder3/words.txt
+   21.41 -    29352 - T  29375 - FINISHED
+   22.54 -    29352 - T  29359 - CLOSE folder/loremc.txt
+   22.61 -    29352 - T  29359 - FINISHED
+   49.92 -    29352 - T  29370 - CLOSE folder/subfolder2/subfolder3/lorem-ipsum-3.txt
+   49.95 -    29352 - T  29370 - FINISHED
+   52.69 -    29352 - T  29372 - CLOSE folder/subfolder2/subfolder3/lorem-ipsum-5.txt
+   52.71 -    29352 - T  29372 - FINISHED
+   53.06 -    29352 - T  29373 - CLOSE folder/subfolder2/subfolder3/lorem-ipsum-6.txt
+   53.08 -    29352 - T  29373 - FINISHED
+   57.63 -    29352 - T  29369 - CLOSE folder/subfolder2/subfolder3/lorem-ipsum-2.txt
+   57.65 -    29352 - T  29369 - FINISHED
+   71.18 -    29352 - T  29371 - CLOSE folder/subfolder2/subfolder3/lorem-ipsum-4.txt
+   71.22 -    29352 - T  29371 - FINISHED
+   71.39 -    29352 - EXIT PROCESS 29352
+   71.40 -    29352 - T  29352 - CLOSE registry/textfile001fts.txt

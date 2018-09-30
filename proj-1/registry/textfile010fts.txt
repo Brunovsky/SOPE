@@ -1,0 +1,79 @@
+    0.23 -    29383 - OPEN registry/textfile010fts.txt
+    0.38 -    29383 - BEGIN TRAVERSAL OF ALL FILES
+    0.51 -    29383 - NEW PROCESS 29384
+    0.71 -    29384 - BEGIN TRAVERSAL folder
+    0.83 -    29383 - END TRAVERSAL OF ALL FILES
+    0.97 -    29384 - OPEN folder/0_ReadMe.txt
+    1.11 -    29384 - CLOSE folder/0_ReadMe.txt
+    1.16 -    29384 - OPEN folder/1.txt
+    2.72 -    29384 - CLOSE folder/1.txt
+    2.76 -    29384 - OPEN folder/2.txt
+    4.40 -    29384 - CLOSE folder/2.txt
+    4.45 -    29384 - OPEN folder/3.txt
+    5.65 -    29384 - CLOSE folder/3.txt
+    5.69 -    29384 - OPEN folder/4.txt
+    6.22 -    29384 - CLOSE folder/4.txt
+    6.24 -    29384 - OPEN folder/index.txt
+    6.26 -    29384 - CLOSE folder/index.txt
+    6.27 -    29384 - OPEN folder/loremc.txt
+    9.52 -    29384 - CLOSE folder/loremc.txt
+    9.59 -    29384 - NEW PROCESS 29385
+    9.70 -    29384 - NEW PROCESS 29386
+    9.70 -    29385 - BEGIN TRAVERSAL folder/subfolder1
+    9.76 -    29385 - OPEN folder/subfolder1/10.txt
+    9.76 -    29384 - END TRAVERSAL folder
+    9.82 -    29386 - BEGIN TRAVERSAL folder/subfolder2
+    9.88 -    29386 - OPEN folder/subfolder2/5.txt
+   10.25 -    29385 - CLOSE folder/subfolder1/10.txt
+   10.27 -    29385 - OPEN folder/subfolder1/11.txt
+   10.28 -    29386 - CLOSE folder/subfolder2/5.txt
+   10.30 -    29386 - OPEN folder/subfolder2/6.txt
+   10.77 -    29386 - CLOSE folder/subfolder2/6.txt
+   10.79 -    29386 - OPEN folder/subfolder2/7.txt
+   10.80 -    29385 - CLOSE folder/subfolder1/11.txt
+   10.82 -    29385 - OPEN folder/subfolder1/12.txt
+   11.21 -    29386 - CLOSE folder/subfolder2/7.txt
+   11.28 -    29386 - NEW PROCESS 29387
+   11.34 -    29386 - END TRAVERSAL folder/subfolder2
+   11.35 -    29387 - BEGIN TRAVERSAL folder/subfolder2/subfolder3
+   11.36 -    29385 - CLOSE folder/subfolder1/12.txt
+   11.39 -    29385 - OPEN folder/subfolder1/dummy.txt
+   11.43 -    29387 - OPEN folder/subfolder2/subfolder3/8.txt
+   11.43 -    29385 - CLOSE folder/subfolder1/dummy.txt
+   11.44 -    29385 - END TRAVERSAL folder/subfolder1
+   11.45 -    29385 - EXIT PROCESS 29385
+   11.46 -    29385 - CLOSE registry/textfile010fts.txt
+   11.53 -    29384 - SIGNAL IN SIGCHLD
+   11.54 -    29384 - WAITPID (PROCESS 29385) (STATUS 0x0000) (LEFT: 1)
+   12.03 -    29387 - CLOSE folder/subfolder2/subfolder3/8.txt
+   12.06 -    29387 - OPEN folder/subfolder2/subfolder3/9.txt
+   12.54 -    29387 - CLOSE folder/subfolder2/subfolder3/9.txt
+   12.56 -    29387 - OPEN folder/subfolder2/subfolder3/lorem-ipsum-2.txt
+   28.14 -    29387 - CLOSE folder/subfolder2/subfolder3/lorem-ipsum-2.txt
+   28.21 -    29387 - OPEN folder/subfolder2/subfolder3/lorem-ipsum-3.txt
+   42.28 -    29387 - CLOSE folder/subfolder2/subfolder3/lorem-ipsum-3.txt
+   42.31 -    29387 - OPEN folder/subfolder2/subfolder3/lorem-ipsum-4.txt
+   67.82 -    29387 - CLOSE folder/subfolder2/subfolder3/lorem-ipsum-4.txt
+   67.90 -    29387 - OPEN folder/subfolder2/subfolder3/lorem-ipsum-5.txt
+   81.99 -    29387 - CLOSE folder/subfolder2/subfolder3/lorem-ipsum-5.txt
+   82.02 -    29387 - OPEN folder/subfolder2/subfolder3/lorem-ipsum-6.txt
+   98.01 -    29387 - CLOSE folder/subfolder2/subfolder3/lorem-ipsum-6.txt
+   98.08 -    29387 - OPEN folder/subfolder2/subfolder3/lorem-ipsum.txt
+   99.22 -    29387 - CLOSE folder/subfolder2/subfolder3/lorem-ipsum.txt
+   99.25 -    29387 - OPEN folder/subfolder2/subfolder3/words.txt
+   99.30 -    29387 - CLOSE folder/subfolder2/subfolder3/words.txt
+   99.31 -    29387 - END TRAVERSAL folder/subfolder2/subfolder3
+   99.35 -    29387 - EXIT PROCESS 29387
+   99.37 -    29387 - CLOSE registry/textfile010fts.txt
+   99.48 -    29386 - SIGNAL IN SIGCHLD
+   99.49 -    29386 - WAITPID (PROCESS 29387) (STATUS 0x0000) (LEFT: 0)
+   99.50 -    29386 - EXIT PROCESS 29386
+   99.50 -    29386 - CLOSE registry/textfile010fts.txt
+   99.65 -    29384 - SIGNAL IN SIGCHLD
+   99.70 -    29384 - WAITPID (PROCESS 29386) (STATUS 0x0000) (LEFT: 0)
+   99.71 -    29384 - EXIT PROCESS 29384
+   99.71 -    29384 - CLOSE registry/textfile010fts.txt
+   99.78 -    29383 - SIGNAL IN SIGCHLD
+   99.79 -    29383 - WAITPID (PROCESS 29384) (STATUS 0x0000) (LEFT: 0)
+   99.80 -    29383 - EXIT PROCESS 29383
+   99.80 -    29383 - CLOSE registry/textfile010fts.txt

@@ -1,0 +1,125 @@
+    0.25 -    29418 - T  29418 - OPEN registry/textfile011fts.txt
+    0.38 -    29418 - BEGIN TRAVERSAL OF ALL FILES
+    0.53 -    29418 - NEW PROCESS 29419
+    0.71 -    29419 - BEGIN TRAVERSAL folder
+    0.84 -    29418 - END TRAVERSAL OF ALL FILES
+    1.06 -    29419 - T  29420 - NEW
+    1.09 -    29419 - T  29421 - NEW
+    1.14 -    29419 - T  29423 - NEW
+    1.14 -    29419 - T  29422 - NEW
+    1.58 -    29419 - T  29424 - NEW
+    2.20 -    29419 - T  29425 - NEW
+    2.44 -    29419 - T  29420 - OPEN folder/0_ReadMe.txt
+    2.49 -    29419 - T  29424 - OPEN folder/4.txt
+    2.52 -    29419 - T  29421 - OPEN folder/1.txt
+    2.55 -    29419 - T  29426 - NEW
+    3.18 -    29419 - NEW PROCESS 29427
+    3.26 -    29419 - T  29423 - OPEN folder/3.txt
+    3.44 -    29419 - T  29420 - CLOSE folder/0_ReadMe.txt
+    3.33 -    29419 - T  29426 - OPEN folder/loremc.txt
+    3.51 -    29419 - T  29420 - FINISHED
+    3.31 -    29419 - T  29425 - OPEN folder/index.txt
+    3.36 -    29419 - T  29422 - OPEN folder/2.txt
+    3.34 -    29427 - BEGIN TRAVERSAL folder/subfolder1
+    3.92 -    29427 - END TRAVERSAL folder/subfolder1
+    3.97 -    29427 - T  29429 - NEW
+    3.99 -    29419 - NEW PROCESS 29428
+    4.08 -    29427 - T  29429 - OPEN folder/subfolder1/10.txt
+    4.15 -    29419 - T  29425 - CLOSE folder/index.txt
+    4.29 -    29427 - T  29430 - NEW
+    4.15 -    29428 - BEGIN TRAVERSAL folder/subfolder2
+    4.34 -    29419 - T  29425 - FINISHED
+    4.27 -    29419 - END TRAVERSAL folder
+    4.47 -    29427 - T  29430 - OPEN folder/subfolder1/11.txt
+    4.58 -    29428 - T  29433 - NEW
+    4.66 -    29428 - T  29435 - NEW
+    5.05 -    29428 - NEW PROCESS 29436
+    5.23 -    29428 - T  29433 - OPEN folder/subfolder2/5.txt
+    5.27 -    29428 - END TRAVERSAL folder/subfolder2
+    5.62 -    29436 - BEGIN TRAVERSAL folder/subfolder2/subfolder3
+    6.27 -    29419 - T  29421 - CLOSE folder/1.txt
+    6.32 -    29419 - T  29421 - FINISHED
+    6.39 -    29436 - END TRAVERSAL folder/subfolder2/subfolder3
+    6.42 -    29419 - T  29424 - CLOSE folder/4.txt
+    6.41 -    29436 - T  29440 - NEW
+    6.44 -    29436 - T  29441 - NEW
+    6.55 -    29428 - T  29434 - NEW
+    6.63 -    29419 - T  29424 - FINISHED
+    6.73 -    29419 - T  29422 - CLOSE folder/2.txt
+    7.02 -    29428 - T  29434 - OPEN folder/subfolder2/6.txt
+    7.08 -    29419 - T  29422 - FINISHED
+    7.15 -    29427 - T  29430 - CLOSE folder/subfolder1/11.txt
+    7.20 -    29427 - T  29430 - FINISHED
+    7.25 -    29427 - T  29429 - CLOSE folder/subfolder1/10.txt
+    7.28 -    29436 - T  29442 - NEW
+    7.30 -    29427 - T  29429 - FINISHED
+    6.75 -    29436 - T  29440 - OPEN folder/subfolder2/subfolder3/lorem-ipsum-3.txt
+    6.77 -    29436 - T  29443 - NEW
+    7.38 -    29436 - T  29442 - OPEN folder/subfolder2/subfolder3/lorem-ipsum-5.txt
+    6.78 -    29436 - T  29444 - NEW
+    7.51 -    29428 - T  29433 - CLOSE folder/subfolder2/5.txt
+    6.80 -    29436 - T  29445 - NEW
+    7.52 -    29428 - T  29433 - FINISHED
+    7.54 -    29436 - T  29444 - OPEN folder/subfolder2/subfolder3/lorem-ipsum.txt
+    7.55 -    29436 - T  29445 - OPEN folder/subfolder2/subfolder3/words.txt
+    7.58 -    29428 - T  29435 - OPEN folder/subfolder2/7.txt
+    7.59 -    29436 - T  29445 - CLOSE folder/subfolder2/subfolder3/words.txt
+    7.60 -    29436 - T  29445 - FINISHED
+    6.91 -    29436 - T  29441 - OPEN folder/subfolder2/subfolder3/lorem-ipsum-4.txt
+    7.83 -    29419 - T  29423 - CLOSE folder/3.txt
+    7.84 -    29419 - T  29423 - FINISHED
+    7.88 -    29436 - T  29439 - NEW
+    7.90 -    29436 - T  29439 - OPEN folder/subfolder2/subfolder3/lorem-ipsum-2.txt
+    7.90 -    29436 - T  29443 - OPEN folder/subfolder2/subfolder3/lorem-ipsum-6.txt
+    8.23 -    29428 - T  29435 - CLOSE folder/subfolder2/7.txt
+    8.25 -    29428 - T  29435 - FINISHED
+    8.28 -    29436 - T  29437 - NEW
+    8.32 -    29436 - T  29437 - OPEN folder/subfolder2/subfolder3/8.txt
+    9.47 -    29436 - T  29437 - CLOSE folder/subfolder2/subfolder3/8.txt
+    9.52 -    29436 - T  29437 - FINISHED
+   10.98 -    29419 - T  29426 - CLOSE folder/loremc.txt
+   11.03 -    29419 - T  29426 - FINISHED
+   11.07 -    29427 - T  29431 - NEW
+   11.10 -    29427 - T  29431 - OPEN folder/subfolder1/12.txt
+   11.13 -    29427 - T  29432 - NEW
+   11.15 -    29427 - T  29432 - OPEN folder/subfolder1/dummy.txt
+   11.20 -    29427 - T  29432 - CLOSE folder/subfolder1/dummy.txt
+   11.21 -    29427 - T  29432 - FINISHED
+   11.79 -    29427 - T  29431 - CLOSE folder/subfolder1/12.txt
+   11.80 -    29427 - T  29431 - FINISHED
+   11.84 -    29427 - EXIT PROCESS 29427
+   11.85 -    29427 - T  29427 - CLOSE registry/textfile011fts.txt
+   11.96 -    29419 - SIGNAL IN SIGCHLD
+   11.97 -    29419 - WAITPID (PROCESS 29427) (STATUS 0x0000) (LEFT: 1)
+   12.70 -    29436 - T  29444 - CLOSE folder/subfolder2/subfolder3/lorem-ipsum.txt
+   12.72 -    29436 - T  29444 - FINISHED
+   15.35 -    29436 - T  29438 - NEW
+   15.39 -    29436 - T  29438 - OPEN folder/subfolder2/subfolder3/9.txt
+   15.87 -    29436 - T  29438 - CLOSE folder/subfolder2/subfolder3/9.txt
+   15.88 -    29436 - T  29438 - FINISHED
+   16.06 -    29428 - T  29434 - CLOSE folder/subfolder2/6.txt
+   16.07 -    29428 - T  29434 - FINISHED
+   32.97 -    29436 - T  29439 - CLOSE folder/subfolder2/subfolder3/lorem-ipsum-2.txt
+   33.00 -    29436 - T  29439 - FINISHED
+   33.71 -    29436 - T  29440 - CLOSE folder/subfolder2/subfolder3/lorem-ipsum-3.txt
+   33.74 -    29436 - T  29440 - FINISHED
+   38.28 -    29436 - T  29441 - CLOSE folder/subfolder2/subfolder3/lorem-ipsum-4.txt
+   38.30 -    29436 - T  29441 - FINISHED
+   38.48 -    29436 - T  29442 - CLOSE folder/subfolder2/subfolder3/lorem-ipsum-5.txt
+   38.50 -    29436 - T  29442 - FINISHED
+   39.22 -    29436 - T  29443 - CLOSE folder/subfolder2/subfolder3/lorem-ipsum-6.txt
+   39.25 -    29436 - T  29443 - FINISHED
+   39.28 -    29436 - EXIT PROCESS 29436
+   39.29 -    29436 - T  29436 - CLOSE registry/textfile011fts.txt
+   39.51 -    29428 - SIGNAL IN SIGCHLD
+   39.52 -    29428 - WAITPID (PROCESS 29436) (STATUS 0x0000) (LEFT: 0)
+   39.53 -    29428 - EXIT PROCESS 29428
+   39.53 -    29428 - T  29428 - CLOSE registry/textfile011fts.txt
+   39.65 -    29419 - SIGNAL IN SIGCHLD
+   39.68 -    29419 - WAITPID (PROCESS 29428) (STATUS 0x0000) (LEFT: 0)
+   39.69 -    29419 - EXIT PROCESS 29419
+   39.71 -    29419 - T  29419 - CLOSE registry/textfile011fts.txt
+   39.81 -    29418 - SIGNAL IN SIGCHLD
+   39.82 -    29418 - WAITPID (PROCESS 29419) (STATUS 0x0000) (LEFT: 0)
+   39.84 -    29418 - EXIT PROCESS 29418
+   39.84 -    29418 - T  29418 - CLOSE registry/textfile011fts.txt

@@ -1,0 +1,270 @@
+/***
+ * SOPE Unix Processes (#3)
+ *
+ * Bruno Carvalho
+ *
+ */
+
+
+$$ Criação de novos processos $$
+
+pid_t fork(void);
+	Return:
+		0    -  para o processo-filho.
+		PID  -  pid do processo-filho para o processo-pai.
+		-1   -  erro.
+
+O filho é uma cópia do pai ficando com uma cópia do segmentos de dados,
+heap, e stack.
+Em alguns sistemas a cópia só é feita se um dos processos tentar modificar
+um destes segmentos.
+
+Após fork(), não é especificado quem executa primeiro (pai ou filho).
+
+Se for necessária sincronização é preciso mecanismos adequados.
+
+fork() falha quando
+O número total de processos no sistema for demasiado elevado.
+MAXPID em <sys/param.h>
+O número total de processos do user for demasiado elevado.
+CHILD_MAX em <limits.h>
+
+
+
+
+
+$ Idioma Fork-Exec $
+
+	p = fork();
+	if (p > 0) (filho) exec(...);
+	// O filho não chega aqui
+	... continua a execução do programa principal ...
+
+
+
+
+
+$ Getpid, Getppid $
+
+#include <sys/types.h>
+#include <unistd.h>
+pid_t getpid(void);       PID próprio processo
+pid_t getppid(void);      PID processo pai
+
+
+
+
+
+$ Terminação de um Processo $
+
+Normal:
+	Executar return na função main.
+	Invocar a função exit() (C)
+		Os exit handlers definidos por atexit() são executados.
+		As I/O streams standard são fechadas.
+	Invocar a função _exit() (sys call)
+
+
+Anormal:
+	Invocar abort()
+	Recebeu sinais não tratados
+
+
+
+
+
+$ Processos órfãos $
+
+Quando o pai termina antes do filho.
+
+Quando um processo termina (neste caso o pai) o kernel percorre todos os processos
+ativos para ver se algum deles é filho do processo que terminou.
+Se o pai terminar antes do filho, o filho é automaticamente adoptado por init.
+Fica assim garantido que qualquer processo tem um pai.
+
+
+
+$ Processos zombie $
+
+Quando o filho termina antes do pai.
+
+Um processo que termina não pode deixar o sistema até que o seu pai aceite o seu
+código de retorno, através da execução de uma chamada wait() ou waitpid().
+
+Assim um processo zombie é um processo que terminou mas cujo pai ainda não
+recolheu o código de terminação.
+
+A informação acerca de um processo zombie (PID, termination status, tempo de CPU...)
+são mantidos na Tabela de Processos.
+O resto da memória usada pelo processo é libertada.
+
+Os ficheiros são fechados.
+
+
+
+
+
+$ Wait, Waitpid $
+
+Quando um processo termina, o kernel notifica o seu pai enviando-lhe um sinal: SIGCHLD.
+O pai pode
+	Ignorar o sinal
+		Se o processo indicar que quer ignorar o sinal os filhos não ficarão zombies.
+		Caso contrário os filhos ficarão zombies.
+	Dispor de um signal handler
+		Em geral, o handler poderá executar um dos waits para obter a PID do filho
+		e o seu termination status.
+
+#include <sys/types.h>
+#include <sys/wait.h>
+pid_t wait(int* statloc);
+pid_t waitpid(pid_t pid, int* statloc, int options);
+	Return: PID do process se OK, -1 se erro
+
+	Um processo que invoque wait ou waitpid pode:
+		Bloquear - se nenhum dos seus filhos tiver terminado.
+		Retornar imediatamente com o termination status de um filho
+			- Se um filho tiver terminado e estiver à espera de retornar
+			o seu termination status (filho zombie).
+		Retornar imediatamente com um erro.
+			- Se não tiver filhos.
+
+	Diferenças entre wait e waitpid:
+		wait pode bloquear o processo que o invoca até que um filho qualquer termine.
+
+	Diferenças entre wait e waitpid:
+		wait pode bloquear o processo que o invoca até que um filho qualquer termine.
+		waitpid tem uma opção que impede o bloqueio (útil quando se quer apenas
+			obter o termination status do filho).
+		waitpid não espera que um filho qualquer termine, antes escolhe por qual
+			vai esperar.
+
+	statloc:
+		== NULL - o termination status é ignorado.
+		!= NULL - o termination status do processo que terminou é guardado aqui.
+
+	pid (waitpid):
+		== -1   espera por um filho qualquer (igual a wait)
+		 >  0   espera pelo filho com a PID indicada
+		==  0   espera por um qualquer filho do mesmo process group
+		 < -1   espera por um qualquer filho cuja process group id seja abs(pid).
+
+	waitpid retorna erro se
+		o processo dado por pid não existir
+		o processo especificado não for filho do processo que a invocou
+		o grupo de processos não existir
+
+	options (waitpid):
+		0   ....
+		WNOHANG
+			waitpid não bloqueia se o filho especificado não tiver terminado.
+			retorna 0.
+		WUNTRACED
+			...
+
+
+
+$ Macros para Termination Status $
+
+WIFEXITED(status)
+	returns true if the child terminated normally, that is, by calling exit,
+	_exit, or returning from main().
+
+WEXITSTATUS(status)
+	returns the exit status of the child. This consists of the least significant
+	8 bits of the statloc argument that the child specified in a call to exit,
+	_exit or return. Thsi macro should be employed only if WIFEXITED was true.
+
+
+WIFSIGNALED(status)
+	returns true if the child process was TERMINATED by a signal.
+
+WTERMSIG(status)
+	returns the number of the signal that caused the child process to terminate.
+	This macro should be employed only if WIFSIGNALED returned true.
+
+
+WCOREDUMP(status)
+	returns true if the child produced a core dump. This macro should be employed
+	only if WIFSIGNALED returned true. Not part of the POSIX standard...
+
+WIFSTOPPED(status)
+	returns true if the child process was STOPPED by delivery of a signal; this is
+	possible only if the call was done using WUNTRACED or when the child is being
+	traced.
+
+WSTOPSIG(status)
+	returns the number of the signal which caused the child to stop.
+	This macro should be employed only if WIFSTOPPED returned true.
+
+
+
+
+
+$ Funções Exec $
+
+#include <unistd.h>
+int execl(const char* pathname, const char* arg0, ..., NULL);
+int execv(const char* pathname, char* const argv[]);
+int execle(const char* pathname, const char* arg0, ..., NULL, char* const envp[]);
+int execve(const char* pathname, char* const argv[], char* const envp[]);
+int execlp(const char* filename, const char* arg0, ..., NULL);
+int execvp(const char* filename, char* const argv[]);
+	Return: Nenhum se bem sucedido, -1 se erro
+
+	l - Lista de argumentos passados um a um
+	v - Vetor de argumentos
+	e - Passam-se as strings de ambiente
+	p - O argumento é o nome do ficheiro executável.
+		Se o path não for especificado, o ficheiro é procurado pela PATH.
+		Se o ficheiro não for um executável, assume-se que pode ser um shell
+		script e tenta-se invocar com sh na shell.
+
+
+Para invocar ls de /bin/ls, incluído na path:
+
+execl("/bin/ls", "/bin/ls", "-1", NULL);
+execv("/bin/ls", {"/bin/ls", "-1", NULL});
+execle("/bin/ls", "/bin/ls", "-1", NULL, { *envp* });
+execve("/bin/ls", {"/bin/ls", "-1", NULL}, { *envp* });
+execlp("/bin/ls", "/bin/ls", "-1", NULL, { *envp* });
+execvp("/bin/ls", {"/bin/ls", "-1", NULL}, { *envp* });
+
+Propriedades que o novo programa herda do processo que o invocou:
+
+PID e PID do pai
+Real user ID, real group ID
+Process group ID
+Session ID
+Terminal de controlo
+Diretório corrente
+Sinais pendentes
+Limites dos recursos
+...
+
+
+O tratamento dado aos ficheiros abertos depende da close-on-exec flag (FD_CLOEXEC),
+que pode ser alterada por fnctl.
+Se estiver ativada o descritor é fechado.
+Se não estiver ativada o descritor é mantido aberto.
+
+
+
+$ System, Idioma Fork + Exec + Waitpid $
+
+#include <stdlib.h>
+int system(const char* cmdstring);
+
+Usada para executar um comando do interior de um programa.
+Não é uma interface para o OS mas para uma shell, e é implementado usando
+fork(), exec() e waitpid().
+
+system()
+	Retorna != 0 se houver um processador de comandos disponível
+
+system(COMMAND)
+	Retorna
+		-1   se o fork() falhou ou waitpid() retornou um erro.
+		127  se o exec() falhou.
+	Termination status da Shell, no formato de waitpid,
+	quando foi tudo bem sucedido.

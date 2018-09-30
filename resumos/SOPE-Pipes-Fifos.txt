@@ -1,0 +1,381 @@
+/***
+ * SOPE Pipes and Fifos (#3)
+ *
+ * Bruno Carvalho
+ *
+ */
+
+
+$$ Pipes $$
+
+Pipes são um mecanismo de comunicação que permite que dois ou mais processos
+a correr no mesmo computador enviem dados uns aos outros.
+
+Tipos de pipes:
+	Pipes sem nome (unnamed pipes, pipes)
+		São half-duplex ou unidirecionais
+		Os dados só podem fluir num sentido.
+		Só podem ser usados entre processos que tenham um antecessor comum.
+	Pipes com nome (named pipes ou fifos)
+		São half-duplex ou unidirecionais.
+		Podem ser usados por processos não relacionados entre si.
+		Têm um nome que os identifica, existente no sistema de ficheiros.
+
+Um pipe pode ser visto como um canal ligando 2 processos,
+permitindo um fluxo de informação unidirecional.
+Esse canal tem uma certa capacidade de bufferização (PIPE_BUF, <limits.h>)
+
+Cada extremidade de um pipe tem associado um descritor de ficheiro.
+
+Um pipe é criado usando a chamada de sistema pipe() a qual devolve dois descritores:
+um representando a extremidade de escrita e outro a de leitura.
+
+Para um programador, os pipes têm uma interface idêntica à dos ficheiros.
+Um processo escreve numa extremidade do pipe como para um ficheiro e outro
+processo lê na outra extremidade. Um pipe pode ser utilizado como um ficheiro
+ou em substituição do periférico de entrada ou de saída de um programa.
+
+#include <unistd.h>
+int pipe(int filedes[2]);
+
+A função retorna 2 descritores de ficheiros:
+
+	READ 0:
+	filedes[0] - está aberto para leitura
+	WRITE 1:
+	filedes[1] - está aberto para escrita
+
+As primitivas de leitura e escrita são read e write, tais como para ficheiros.
+
+FILE* fdopen(int filedes, const char* mode);
+Associa uma stream a um descritor de ficheiro, filedes, já existente.
+
+Desta forma é possível aceder a um pipe usando as funções de leitura e escrita
+da biblioteca standard de C: fscanf(), fprintf(), fread(), fwrite().
+
+O modo da stream: "r", "r+", "w", "w+", "a", "a+".
+Deve ser compatível com o modo do descritor do ficheiro.
+
+Para criar um canal de comunicação entre processo-pai e processo-filho,
+o processo-pai cria um pipe usando pipe() e depois invoca fork().
+Depois um dos processos usa o descritor de entrada do pipe e o outro a saída.
+Para assegurar que não se escreve no file descriptor errado, o processo que
+usa a entrada pode fechar o descritor de saída, e o processo que usa a saída
+pode fechar o descritor de entrada.
+
+A comunicação bidirecional é possível usando-se dois pipes distintos.
+
+
+
+
+
+$ Leitura de pipes $
+
+Se um processo executar read de um pipe cuja extremidade de escrita foi fechada,
+depois de todos os dados terem sido lidos, read retorna 0, indicando fim de ficheiro.
+
+NOTA:
+	Normalmente existe um único leitor e um único escritor de/para um pipe.
+	No entanto, é possível ler, por exemplo, vários descritores e um único leitor.
+	Nesta último caso, o fim do ficheiro só é retornado
+	quando todos os escritores tiverem fechado o terminal de escrita do pipe.
+
+BLOQUEAMENTO:
+	Se um processo executar read de um pipe vazio, cuja
+	extremidade de escrita esteja aberta e vazia,
+	bloqueia até haver dados disponíveis.
+
+BUFFER:
+	Se um processo tentar ler mais bytes do que os disponíveis
+	são lidos os bytes disponíveis e a chamada read retorna o número de bytes lidos.
+
+
+
+
+
+$ Escrita de pipes $
+
+Se um processo executar write de um pipe cuja extremidade de leitura foi fechada
+a escrita falha e ao escritor é enviado o sinal SIGPIPE.
+A ação por omissão deste sinal é terminar o recetor do sinal.
+
+CONCORRÊNCIA / DATA RACES:
+	Se um processo escrever PIPE_BUF bytes ou menos é garantido que a escrita
+	é feita atomicamente, isto é, não é interlaçada com escritas de outros processos
+	que escrevam para o mesmo pipe.
+
+	Se um processo escrever mais do que PIPE_BUF bytes não são dadas garantias
+	de atomicidade da escrita, isto é, os dados dos diversos escritores
+	podem surgir interlaçados.
+
+
+
+
+
+$ Standardizing Pipes $
+
+Para sincronizar dois processos com stdin, stdout:
+
+	pai                            filho
+		fd1[1]  ---------->  fd1[0]
+		fd2[0]  <----------  fd2[1]
+
+Ligar fd1[1] à stdout de pai:    dup2(fd1[WRITE], STDOUT_FILENO);
+Ligar fd1[0] à stdin de filho:   dup2(fd1[READ], STDIN_FILENO);
+Ligar fd2[0] à stdin de pai:     dup2(fd2[READ], STDIN_FILENO);
+Ligar fd2[1] à stdout de filho:  dup2(fd2[WRITE], STDOUT_FILENO);
+
+
+
+
+
+$ Funções popen, pclose $
+
+#include <stdio.h>
+FILE* popen(const char* cmdstring, const char* type);
+	Return: file pointer se OK, NULL se erro.
+
+int pclose(FILE* fp);
+	Return: ermination status de cmdstring se OK; -1 se erro.
+
+popen:
+	Cria um pipe entre o processo que a invocou e um programa a executar;
+	este programa tanto pode receber como fornecer dados ao processo.
+
+	Retorna um apontador para um ficheiro FILE* que será o ficheiro de
+	entrada ou de saída do programa, consoante o parâmetro type.
+
+	cmdstring:
+		Comando a executar, com argumentos e tudo.
+
+	type:
+		"r": o file pointer retornado está ligado à stdout do programa
+		inicializado por cmdstring.
+			SELF <------ CHILD
+		"w": o file pointer retornado está ligado à stdin do programa
+		inicializado por cmdstring.
+			SELF ------> CHILD
+
+pclose:
+	Fecha o ficheiro.
+	Espera que o programa termine (mais concretamente a shell)
+	Retorna o termination status da subshell usada para executar o programa.
+
+
+
+
+
+$ Filtros $
+
+Um programa que lê da stdin de um programa X e escreve para a stdout de
+um programa Y, constituindo uma ponte entre dois processos, processando
+o que é escrito e filtrando-o.
+
+Program X ----------> Filter ----------> Program Y
+
+
+
+
+
+$ Coprocessos $
+
+É um filtro especial cuja stdin e stdout estão ligadas a um outro processo,
+através de pipes. Atua como um processo auxiliar.
+
+pai                                             Coprocesso
+	fd1[WRITE]  -------> pipe 1 -------> stdin
+	fd2[READ]   <------- pipe 2 <------- stdout
+
+
+
+
+
+$$ FIFOs / Named Pipes $$
+
+FIFOs permitem troca de dados entre processos não relacionados entre si
+a correr no mesmo host.
+
+Um FIFO é um tipo de ficheiro, e tem um nome que existe no sistema de ficheiros.
+Podemos testar se um ficheiro é um FIFO com a macro S_ISFIFO.
+
+Um FIFO pode ser criado usando mkfifo
+Um FIFO tem existência até ser explicitamente destruído:
+	unlink (C)
+	rm (Shell)
+
+#include <sys/types.h>
+#include <sys/stat.h>
+int mkfifo(const char* pathname, mode_t mode);
+	Return: 0 se OK; -1 se erro.
+
+mkfifo:
+	pathname: Nome do ficheiro FIFO.
+	mode: Permissões de acesso (rwerwerwe) para owner, group, other.
+		owner | group | other
+		r w x | r w x | r w x
+		1 1 1   1 0 1   0 1 0
+
+Utilização de uma FIFO:
+	Criar usando mkfifo ou mknod.
+	Abrir usando open ou fopen (abrir em half-duplex, i.e. apenas escrita
+	ou apenas leitura para um dado programa).
+	Escrever / Ler usando read, write, ...
+	Fechar usando close ou fclose.
+	Destruir usando unlink.
+
+REGRAS:
+	Abertura: open()
+	Se um processo tentar abrir um FIFO em modo read only e nenhum processo
+	tiver o FIFO atualmente aberto para escrita o leitor esperará que um
+	processo abra o FIFO para escrita a menos que a flag O_NONBLOCK esteja
+	ativada (em open()) caso em que open() retorna imediatamente.
+
+	Se um processo tentar abrir um FIFO em modo write only e nenhum processo
+	tiver o FIFO atualmente aberto para leitura o escritor esperará que
+	um processo abra o FIFO para leitura a menos que a flag O_NONBLOCK
+	esteja ativada (em open()) caso em que open falha imediatamente (-1).
+
+	Leitura / Escrita:
+	Escrita para um FIFO que nenhum processo tem aberto para leitura
+	=> SIGPIPE é enviado ao processo-escritor.
+	Se o sinal não for tratado o processo é terminado.
+	Se o sinal for ignorado ou o handler retornar, então write retorna EPIPE.
+
+	Assim que o último escritor tiver fechado um FIFO, um EOF é gerado
+	em respostas às leituras seguintes, após o FIFO ficar vazio.
+
+	Se houver vários processos-escritores, só há garantia de escritas
+	atómicas quando se escreve no máximo PIPE_BUF bytes.
+
+
+
+
+
+$ Comando mkfifo, tee $
+
+mkfifo FIFONAME
+
+Cria um FIFO no local com o nome FIFONAME.
+
+
+tee FIFO | PROG
+
+tee: Avança a sua stdin para a sua stdout E para o ficheiro FIFO,
+criando uma cópia de tudo o que é escrito na sua stdin antes de fazer
+forward para o programa PROG.
+
+
+
+
+
+$ Função fnctl $
+
+Manipulates a file descriptor
+
+#include <unistd.h>
+#include <fcntl.h>
+int fcntl(int fd, int cmd, /* arg */);
+
+fcntl:
+	fd: O file descriptor que deve ser manipulado.
+	cmd: Um command que especifica a operação de fcntl.
+	Duplicating a file descriptor
+		F_DUPFD (int)
+		Find the lowest numbered available file descriptor greater than or equal
+		to arg and make it be a copy of fd.
+
+		F_DUPFD_CLOSEXEC (int)
+		As for F_DUPFD, but set the close-on-exec flag for the duplicate descriptor.
+
+	File descriptor flags
+		F_GETFD (void)
+		Read the file descriptor flags.
+
+		F_SETFD (int)
+		Set the file descriptor flags to the value specified by arg.
+
+	File status flags
+		Each open file description has certain associated status flags,
+		initialized by open() and modified by fcntl().
+		Duplicated file descriptors made with dup(), fcntl(F_DUPFD), fork(), etc
+		refer to the same open file.
+
+		F_GETFL (void)
+		Get the file access mode and the file status flags.
+
+		F_SETFL (int)
+		Set the file status flags to the value specified by arg.
+		Flags: O_APPEND, O_ASYNC, O_DIRECT, O_NOATIME, O_NONBLOCK.
+
+	... (see man fcntl)
+
+	Return:
+		cmd = F_DUPFD, F_DUPFD_CLOSEXEC
+			The new descriptor.
+		cmd = F_GETFD
+			Value of file descriptor flags.
+		cmd = F_GETFL
+			Value of file status flags.
+		...
+		Sets: Return 0 se OK; -1 se erro.
+
+
+
+
+
+
+
+
+
+
+$ Exemplos $
+
+open (FIFO1, O_RDONLY);
+Bloqueia até que um processo abra FIFO para escrita.
+
+open(FIFO, O_RDONLY | O_NONBLOCK);
+É bem sucedida e retorna imediatamente mesmo que o FIFO ainda
+não tenha sido aberto para escrita por nenhum processo.
+
+open(FIFO, O_WRONLY);
+Bloqueia até que um processo abra o FIFO para leitura.
+
+open(FIFO, O_WRONLY | O_NONBLOCK);
+Retorna imediatamente. Se algum processo tiver o FIFO aberto para leitura,
+retorna um descritor do FIFO se não retorna -1 (ENXIO) e o FIFO não é aberto.
+
+read(...)   De um Pipe ou FIFO, com mais dados do que os disponíveis
+Retorna só os dados disponíveis.
+
+read(...)   De um Pipe ou FIFO vazio, não aberto
+Retorna 0 (EOF), independentemente de O_NONBLOCK.
+
+read(...)   De um Pipe ou FIFO vazio, aberto
+Se O_NONBLOCK:
+	Retorna erro EAGAIN.
+Se ~O_NONBLOCK:
+	Bloqueia até que sejam escritos dados no Pipe/FIFO ou até que
+	o Pipe/FIFO deixe de estar aberto para escrita.
+
+write(...)  Num Pipe ou FIFO, não aberto para leitura.
+SIGPIPE é enviado para o escritor, independentemente de O_NONBLOCK.
+
+write(...)  Num Pipe ou FIFO, já aberto para leitura
+Se O_NONBLOCK:
+	O valor de retorno de write(...) depende do número de bytes a escrever
+	e do espaço disponível nesse momento, no Pipe/FIFO:
+	Se o número de bytes a escrever é <= PIPE_BUF:
+		Se há espaço no Pipe/FIFO, é tudo escrito.
+		Se não há espaço, write() retorna imediatamente com erro EAGAIN.
+	Se o número de bytes a escrever > PIPE_BUF:
+		Se há espaço no Pipe/FIFO para pelo menos 1 byte
+		o kernel transfere para lá o número de bytes que lá couberem,
+		e write() retorna o número de bytes escritos.
+		Se não há espaço, write() retorna imediatamente com erro EAGAIN.
+Se ~O_NONBLOCK:
+	Se o número de bytes a escrever é <= PIPE_BUF:
+		Se há espaço no Pipe/FIFO, é tudo escrito.
+		Se não há espaço, write() bloqueia até haver espaço.
+	Se o número de bytes a escrever > PIPE_BUF:
+		Retorna o número de bytes escritos, possivemente zero.
+

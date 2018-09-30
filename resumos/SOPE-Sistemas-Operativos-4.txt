@@ -1,0 +1,489 @@
+/***
+ * SOPE Teoria dos Sistemas Operativos #4
+ *
+ * Bruno Carvalho
+ *
+ */
+
+
+$$ Processos e Threads $
+
+Um PROCESS engloba:
+	Código + dados
+	Conteúdo do program counter, registos, stack, ...
+	Recursos
+
+O ficheiro contendo o programa compilado é lido e
+a memória do novo processo é inicializada com o conteúdo do ficheiro.
+
+O OS cria um novo Bloco de Controlo de Processo (PCB - Process Control Block)
+Estrutura de dados contendo informação acerca do processo.
+
+
+
+$ Funçóes de administração de processos num OS $
+
+Criação e remoção de processos.
+Interlaçamento da execução dos processos e controlo do seu progresso
+garantindo o avanço da sua execução pelo sistema.
+Actuação por ocasião da ocorrência de situações excecionais (erros aritméticos...)
+Alocação dos recursos de hardware aos processos.
+Fornecimento dos meios de comunicação de mensagens e sinais entre os processos.
+
+
+Process -> Posse de recursos
+Thread  -> Sequência de execução
+
+Múltiplas threads podem estar associadas a um process.
+
+
+
+$ Modelo de 5 Estados $
+
+						,------------------------------------------------>
+	Novo ---------> Pronto -------------------> A executar ----------> Saída
+		 (Admissão)  ^  ^-------------------------´   |    (Terminação)  ^
+		 			 |                                |                  |
+		 			 | (Evento)              (Espera) |                  |
+		 			 |                                |                  |
+		 			Bloqueado <-----------------------´                  |
+		 			 `---------------------------------------------------´
+
+
+Queue de Processos Prontos:
+
+	P(n-1) P(n-2) ... P(m+1) P(m)
+
++ Queue de Processos bloqueados, para cada tipo de evento
+
+	Os processos mais novos (P(m)) são despachados primeiro para o processador.
+	Se o processo em execução gastar o total do seu share temporal, é posto
+	on-hold e recolocado no fim da fila de processos, para permitir que os
+	outros processos na fila prossigam execução.
+	Se o processo em execução ficar à espera de um evento, é recolocado no
+	Queue de processos bloqueados. Assim que o evento for processado externamente
+	e o processo já não estiver bloqueado, é colocado na fila de processos prontos.
+
+	Existe um Queue de processos bloqueados para cada tipo de evento ou I/O.
+
+
+Transições:
+	Novo -> Pronto
+		Quando o processo está criado e é inicializado.
+	Pronto -> A executar
+		Quando o processo é atribuído ao CPU.
+	A executar -> Pronto
+		Quando a share de tempo do processo em execução esgota.
+	A executar -> Bloqueado
+		Quando um processo bloqueia à espera de um evento.
+		(Operação de I/O, acesso a ficheiro, serviço do OS,
+		comunicação com outro processo, ...)
+	A executar -> Terminação
+		O processo termina a execução com exit.
+	Bloqueado -> Pronto
+		Quando o evento ocorre.
+	Pronto, Bloqueado -> Terminação
+		Quando o processo é forçado a terminar por outro processo.
+
+
+Problema:
+Como o cpu é muito mais rápido que a I/O será comum acontecer que
+todos os processos em memória estejam à espera de I/O.
+
+Solução: SWAPPING
+Deslocar parte de/todo um processo para o disco
+
+Quando nenhum dos processos em memória principal está pronto o OS desloca um
+dos processos bloqueados para o disco e coloca-o numa fila de processos suspensos.
+-> Modelo de 6 estados
+
+A activação do processo Suspenso -> Pronto
+só deve ser feita quando acontecer o evento que deu origem a que o processo
+fosse suspenso. Preferível dividir o estado Suspenso em 2 estados:
+Bloqueado Suspenso   e   Pronto Suspenso
+-> Modelo de 7 estados
+
+
+Razões para suspensão do processo:
+Swapping
+Pedido interativo do user
+Pedido do processo-pai
+Temporização (processo executado periodicamente)
+Outra razão do OS (processo corre em background)
+
+Transições:
+	Pronto -> Pronto Suspenso
+		Em geral é pouco comum;
+		Será preferível suspender um processo bloqueado;
+		Usado para libertar memória principal.
+	Bloqueado Suspenso -> Bloqueado
+		Quando o processo tem maior prioridade do que qualquer
+		um dos que está no estado Pronto Suspenso e o OS presume
+		que o evento acontecerá em breve
+	A executar -> Pronto, Suspenso
+		O OS recorre à preempção (retirar a CPU) de um processo
+		quando um processo de prioridade mais elevada fica Pronto.
+
+	Preempção
+		Retirar do processador um processo sem ser por ele
+		estar bloqueado ou ter terminado.
+
+
+
+$ Modelo de Estados de Processos UNIX $
+
+	9 estados
+
+	2 estados "A executar"
+		> Kernel mode
+		> User mode
+
+	> Created == Novo
+	> Ready to Run in Memory == Pronto
+	> Preempted == Pronto
+	> Ready to Run Swapped == Suspenso Pronto
+	> Sleep, Swapped == Suspenso Bloqueado
+	> Asleep in Memory == Bloqueado
+	> Zombie == Processo terminado mas não aceite pelo processo-pai
+
+
+Para gerir e controlar os processos o OS deve saber:
+onde cada processo está colocado
+os atributos do processo
+
+O OS mantém uma Tabela de Processos com uma entrada por cada processo,
+contendo toda a informação relevante para a gestão dos processos.
+Os processos na Tabela podem estar organizados em várias listas
+consoante o seu estado (pronto, a executar, ...)
+
+
+$ Bloco de Controlo do Processo - PCB $
+
+	Identificação do Processo
+		PID Process ID
+	Identificação do Processo Pai
+		PPID Parent Process ID
+	Estado do Processo
+	Registos do Processo
+		Program Counter, Flags, Registos do CPU, ...
+	Informação do Escalonamento da CPU
+		Prioridade, ...
+	Informação da Gestão de Memória
+		Limites da zona de memória principal
+	Informação de contabilidade
+		Tempo de CPU gasto, ...
+	Informação de estado da I/O
+		Ficheiros abertos, operações pendentes, ...
+
+
+
+Tabelas de memória:
+	Alocação da memória principal e secundária
+	Proteções de acesso
+	Informação para a gestão da memória virtual
+
+Tabelas de I/O:
+	Estado das operações de I/O
+	Localização dos dados de origem e de destino
+
+Tabelas de ficheiros:
+	Ficheiros existentes
+	Posição em memória secundária
+	Estado atual
+	Outros atributos
+
+
+Operações típicas do kernel:
+Criação e terminação de processos
+Escalonamento e despacho
+	Scheduler - implementa a política global de gestão da CPU
+				Seleciona o próximo processo a executar
+	Dispatcher - Dá o controlo da CPU ao processo selecionado
+		==> Comutar de contexto
+			Comutar para modo user
+			Saltar para o program counter do programa
+
+Sincronização e suporte para intercomunicação entre processos
+Gestão dos Process Control Blocks.
+
+
+
+Razões para terminar um processo:
+Completação normal
+Tempo limite excedido
+Memória indisponível
+Violação dos limites de memória
+Erro de proteção
+Erro aritmético
+Tempo de espera excedido
+Falha de I/O
+Instrução inválida
+Instrução priveligiada
+Intervenção do operador ou OS
+Terminação do processo-pai
+Pedido do processo-pai
+...
+
+
+
+$ Criação de um Processo $
+
+	Atribuir um ID ao processo (PID)
+	Reserver espaço para o processo
+		Para todos os elementos da imagem do processo
+			programa + dados + stack + PCB
+	Inicializar o PCB
+	Colocar o processo na lista de processos Prontos
+	Criar / atualizar outros estruturas de dados
+	(Dados de contabilidade do sistema)
+
+
+Comutação de Contexto:
+	Salvaguarda do estado atual do processo;
+	Restauro do estado, previamente guardado, do próximo
+	processo a executar;
+	Passagem do controlo do CPU para o novo processo.
+
+Comutação de contexto => Perda de tempo
+Para reduzir esta perda de tempo:
+	Máquinas onde existe mais do que um conjunto de registos
+	Vários cores
+	Utilização de threads
+
+
+
+$ Criação de processos em UNIX $
+
+> fork() cria um novo processo (processo-filho)
+que obtém uma cópia de toda a memória do processo-pai.
+
+Os 2 processos executam concorrentemente.
+
+Não é carregado nenhum programa novo.
+Os 2 processos correm o mesmo programa.
+O processo divide-se em 2 cópias, ambas resultantes da chamada a fork(),
+com todo o estado anterior em comum.
+
+
+
+> exec() faz o carregamento de um programa novo.
+O código do programa que invocar exec() é substituídopelo
+código do programa que for indicado como argumento de exec().
+
+
+
+$ fork() $
+
+Cria simultaneamente:
+um novo processo
+um novo espaço de endereçamento
+
+É possível distinguir o processo-pai do processo-filho
+testando o valor retornado por fork():
+= 0 => é o processo-filho
+> 0 => é o processo-pai
+		o valor retornado é o PID do filho
+= -1 => a chamada falhou
+
+
+
+$ Threads = Lightweight Process $
+
+Um thread é um processo "leve" com um estado reduzido.
+A redução do estado é conseguida fazendo com que um grupo de threads
+partilhe recursos como memória, ficheiros, dispositivos de I/O, ...
+
+Nos sistemas baseados em threads:
+	  Um processo pode ter vários threads;
+	  Os threads tomam o lugar dos processos como a mais pequena unidade
+	de escalonamento.
+	  Se a implementação for kernel-level enquanto um thread está bloqueado
+	outro pode estar a executar.
+	  O processo serve como o ambiente para a execução dos threads.
+
+Os threads partilham:
+	A secção de código
+	A secção de dados
+	Os recursos do OS
+A comutação entre threads do mesmo processo é muito menos pesada
+do que entre processos tradicionais.
+
+Não existe proteção entre threads do mesmo processo.
+
+Qualquer alteração das variáveis globais de um processo é visível
+em todos os seus threads => Problema de concorrência.
+
+Em alguns OSs é possível um thread criar variáveis globais cujo
+conteúdo depende do thread que refere essa variável;
+estas variáveis não são acedidas diretamente, mas através de chamadas
+a funções específicas de acesso. Esta facilidade é conhecida por
+TLS - Thread Local Storage.
+
+Suspensão (swapping) de um processo => suspensão dos seus threads.
+
+Terminação do processo => terminação dos seus threads.
+
+
+
+Processo tradicional (Heavyweight Process)
+Processo com um único thread
+
+Processo c/ threads
+Vários segmentos de código a executar de forma sincronizada.
+
+
+$ Estados de Threads $
+
+	Em Windows 2000:
+
+	Ready, Standby, Running (Runnable)
+	Transition, Waiting, Terminated (Not Runnable)
+
+	Ready
+		O thread pode ser escalonado para execução
+	Standby
+		O thread foi selecionado para executar a seguir;
+		Espera neste estado até o processador estar disponível (que o thread
+		a executar bloqueie ou a sua fatia e tempo expire);
+		Se a prioridade deste thread for superior à do thread que está
+		a correr este pode sofrer preempção...
+	Running
+		A executar...
+	Waiting
+		Bloqueado...
+	Transition
+		Está pronto a correr mas os recursos ainda não estão disponíveis.
+		(e.g. a stack do thread foi colocada em disco, ...)
+	Terminated
+		Terminou normalmente, ou terminado por outro thread, ou pelo processo-pai.
+
+
+
+$ Threads Vantagens $
+
+	Economia e Velocidade
+		Menos tempo apra criar, comutar e terminar
+
+	Aumento da rapidez de resposta percebida pelo user
+		Um thread lê comandos, outro executa-os,
+		permite ler o próximo comando enquanto o anterior é executado.
+
+	Eficiência de comunicação
+		Recorrendo à memória partilhada
+		não é necessário invocar o kernel
+
+	Utilização de arquiteturas multicore
+		Cada thread pode executar em paralelo num core diferente.
+
+
+Dificuldade: Sincronização e Concorrência entre Threads
+quando manipulam as mesmas variáveis.
+
+
+
+$ User-Level Threads $
+	O kernel "não sabe" da existência de threads.
+	Toda a gestão dos threads é feita pela aplicação usando uma biblioteca
+	de funções apropriada.
+	A comutação entre threads não requer privilégios de kernel mode.
+	O escalonamento depende da aplicação.
+
+$ Kernel-Level Threads $
+	Toda a gestão de threads é feita pelo kernel.
+	Não existe uma biblioteca de threads mas uma API de threads.
+	A comutação entre threads requer uma intervenção do kernel.
+	O escalonamento é feito sobre os threads.
+	O kernel mantém informação de escalonamento sobre os processos
+	e sobre os threads.
+
+
+User-Level Threads Vantagens:
+A comutação entre threads não envolve o kernel,
+logo não implica comutação para kernel mode.
+
+O escalonamento pode ser específico de uma aplicação;
+possível escolher o algoritmo mais adequado.
+
+Podem ser usados em qualquer OS. Basta que se disponha de uma biblioteca.
+
+Desvantagens:
+
+Quando uma chamada ao sistema implica um bloqueio, todos os threads do
+processo ficam bloqueados!
+O kernel só pode atribuir processador aos processos. Dois threads do mesmo
+processo não podem correr em simultâneo em dois processadores.
+
+
+Threads não devem ser implementados em User-level: derrota o propósito.
+
+
+Kernel-Level Threads Vantagens:
+O kernel pode escalonar os diversos threads de um mesmo processo para
+executarem em diferentes processadores.
+O bloqueamento é feito ao nível dos threads. Quando um thread bloqueia,
+outros threads do mesmo processo podem continuar a executar.
+As rotinas do kernel pode ser multithreaded.
+
+Desvantagens:
+A comutação entre threads envolve o kernel.
+(user-mode -> kernel-mode e kernel-mode -> user-mode).
+A comutação é mais lenta.
+
+
+Suporte para Kernel-Level Threads: Windows NT, Linux, Solaris.
+
+
+Aproximação mista a Threads:
+A criação de threads é feita no espaço do user.
+A maior parte do escalonamento e sincronização também são feitos pelo user.
+As user-level threads são mapeadas em kernel-level threads.
+
+O utilizador pode ajustar o número de kernel-level threads.
+
+Permite combinar as vantagens de ULTs e KLTs.
+
+
+
+$$ Interface Threads $
+
+$ POSIX threads $
+
+Funções (~60):
+Criar e esperar por threads:
+	pthread_create
+	pthread_join
+
+Terminar threads:
+	pthread_cancel
+	pthread_exit
+	exit() - termina todos os threads
+	return - termina o thread corrent
+
+Determinar a ID de um thread:
+	pthread_self
+
+Sincronizar o acesso a variáveis partilhadas:
+	pthread_mutex_init
+	pthread_mutex_lock
+	pthread_mutex_unlock
+
+
+
+$ Win32 threads $
+
+Primitivas da Win32 API:
+CreateProcess
+CreateThread
+SuspendThread
+ResumeThread
+ExitThread
+TerminateThread
+...
+
+CreateProcess()
+	Cria um novo espaço de endereçamento a partir de um
+	ficheiro executável (um novo processo heavyweight), com
+	um único thread executando no ponto de entrada.
+
+CreateThread()
+	cria um novo thread dentro do espaço de endereçamento do thread original.

@@ -1,0 +1,387 @@
+/***
+ * SOPE Unix Files (#2)
+ *
+ * Bruno Carvalho
+ *
+ */
+
+
+$$ Files $$
+
+As chamadas ao sistema relacionadas com ficheiros permitem manipular ficheiros
+simples, diretórios e ficheiros especiais, incluindo:
+
+	- ficheiros em disco
+	- terminais
+	- impressoras
+	- facilidades para intercomunicação entre processos,
+	  tais como pipes e sockets.
+
+
+$ File Descriptors $
+
+Para o kernel todos os ficheiros abertos são referidos através de descritores.
+
+Quando se cria um ficheiro ou se abre um ficheiro já existente, o kernel retorna
+um descritor ao processo que criou ou abriu o ficheiro. Este descritor é usado
+como argumento das chamadas que permitem ler ou escrever no ficheiro.
+
+Um descritor é um INT, não negativo, geralmente pequeno.
+Os descritores podem tomar valores entre 0 e OPENMAX.
+
+Por convenção, as shells de Unix associam os 3 primeiros descritores
+a ficheiros standard:
+	STDIN_FILENO     0 - standard input
+	STDOUT_FILENO    1 - standard output
+	STDERR_FILENO    2 - standard error
+
+Por exemplo:
+	a função printf() escreve sempre usando o descritor 1.
+	a função scanf() lê sempre usando o descritor 0.
+
+Quando se fecha um ficheiro, o descritor correspondente é libertado e pode ser
+reutilizado quando se abre um novo ficheiro.
+Um ficheiro pode ser aberto várias vezes e por isso pode ter vários descritores
+a ele associados.
+
+
+
+Propriedades dos descritores:
+	> Um apontador de ficheiro que indica a posição do ficheiro onde será
+	executada a próxima operação de leitura/escrita.
+		colocado a 0 (zero) quando o descritor é criado (por default)
+		avança automaticamente após cada operação de leitura/escrita.
+	> Uma flag que indica se o descritor deve ser automaticamente fechado
+	se o processo invocar uma das funções exec().
+	> Uma flag que indica se o que se escreve para o ficheiro deve ser
+	acrescentado no fim do ficheiro.
+
+Existem outras propriedades que só se aplicam a ficheiros especiais
+como pipes e sockets:
+	> Uma flag que indica se um processo deve bloquear se tentar ler de um
+	ficheiro quando ele está vazio.
+	> Um número que indica o identificador de um processo ou de um
+	grupo de processos a quem deve ser enviado o signal SIGIO se
+	passarem a existir dados no ficheiros.
+
+Cada processo tem uma Tabela de Descritores.
+Cada descritor aponta para um iterador de uma cópia de um ficheiro aberto.
+Cada iterador conhece o inode do ficheiro, i.e. a informação do ficheiro no sistema.
+
+É possível dois processos escreverem e lerem do mesmo ficheiro concorrentemente,
+pois eles interagem com cópias em memória principal do ficheiro e não diretamente
+com a memória.
+
+
+
+A consola (Teclado + Ecrã) é vista pela maioria dos OSs como um ou mais ficheiros
+de onde se pode ler ou escrever texto.
+
+A biblioteca standard de C inclui diversas funções de leitura e escrita
+direta neste tipo de ficheiros: printf, scanf, getchar, putchar.
+
+Também é possível aceder àqueles periféricos através de serviços dos OSs:
+	> O Unix não define serviços especiais de leitura e escrita na consola.
+	> Deverão usar-se os serviços genéricos de leitura e escrita de ficheiros.
+
+
+
+$$ Consola $$
+
+Modos de funcionamento da consola em Unix:
+
+Modo canónico (cooked)
+	Existe uma série de carateres especiais de entrada que são processados
+	pela consola e não são transmitidos ao programa que está a ler:
+		Ctrl+U, Ctrl+H, Ctrl+S, Ctrl+Q, ....
+	Muitos destes carateres são alteráveis programaticamente.
+	A entrada só é passada ao programa quando se tecla Return.
+
+Modo primário (raw)
+	Não há qualquer processamento prévio dos carateres teclados.
+	Eles são passados um a um ao programa.
+
+
+Alteração das caraterísticas da consola em Unix:
+
+#include <termios.h>
+int tcgetattr(int filedes, struct termios* termptr);
+int tcsetattr(int filedes, int opt, const struct termios* termptr);
+
+tcgetattr
+	Preenche uma estrutura termios com as caraterísticas do
+	componente da consola cujo descritor é filedes.
+
+tcsetattr
+	Modifica as caraterísticas da componente da consola
+	cujo descritor é filedes, com os valores passados na struct termios.
+	opt indica quando a modificação ocorrerá:
+		TCSANOW -> imediatamente
+		TCSADRAIN -> após buffer de saída se esgotar
+		TCSAFLUSH -> após buffer de saída se esgotar + esvazia buffer de entrada
+
+struct termios {
+	tcflag_t c_iflag;     input flags
+	tcflag_t c_oflag;     output flags
+	tcflag_t c_cflag;     control flags
+	tcflag_t c_lflag;     local flags
+	cc_t c_cc[NCCS];      control characters
+}
+
+c_Xflag:
+	Campos constituídos por flags de um ou mais bits,
+	que permitem controlar as caraterísticas da consola.
+
+c_cc[]:
+	array onde se definem os carateres especiais que são processados
+	pela consola quando esta estiver a funcionar em modo canónico.
+
+Usar [stty -a] para ver os settings da estrutura termios na consola.
+Usar [stty sane] (+ Return ou Ctrl+J) para repor o estado default da consola.
+
+
+
+$$ Criação / Abertura de Ficheiros $$
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
+int open(const char* pathname, int oflag, ... /*, mode_t mode */);
+	Return: Descritor do ficheiro se OK, -1 se erro.
+	pathname = nome do ficheiro.
+	oflag = combinação de várias flags de abertura.
+		O_RDONLY      - abertura só para leitura         |
+		O_WRONLY      - abertura só para escrita         | 1 only
+		O_RDWR        - abertura para leitura e escrita  |
+		O_APPEND      - para acrescentar no fim do ficheiro.
+		O_CREAT       - para criar o ficheiro se ele não existir (requer mode)
+		O_EXCL        - gerar erro se o ficheiro existir e O_CREAT estiver set.
+		O_TRUNC       - se o ficheiro existir fica com comprimento 0.
+		O_SYNC        - só retorna depois de os dados terem sido fisicamente
+		                escritos no ficheiros.
+	mode = permissões associadas ao ficheiro.
+	       só deve ser indicado quando se cria um novo ficheiro.
+	    S_IRUSR    user read
+	    S_IWUSR    user write
+	    S_IXUSR    user execute
+	    S_IRGRP    group read
+	    S_IWGRP    group write
+	    S_IXGRP    group execute
+	    S_IROTH    others read
+	    S_IWOTH    others write
+	    S_IXOTH    others execute
+	    Ou em octal:
+	    	owner | group | other
+	    	r w x | r w x | r w x
+	    	0 0 1   1 0 1   0 0 1     #define MODE 0151
+	    	  1       5       1
+
+As permissões efetivas podem não ser exatamente as especificadas,
+consoante o valor da file creation mask umask.
+
+O valor por omissão desta máscara é normalmente 022 (octal), que significa
+anular as permissões de escrita exceto para o owner.
+
+
+
+$ Duplicação de um descritor $
+
+#include <unistd.h>
+
+int dup(int filedes);
+int dup2(int filedes, int filedes2);
+
+	Return: Descritor do ficheiro se OK, -1 se erro.
+	dup:
+		Procura o descritor livre com o número mais baixo e pôe-no a
+		apontar para o mesmo ficheiro que filedes. Retorna esse descritor.
+
+	dup2:
+		Fecha filedes2 se ele estiver atuamente aberto e põe filedes2
+		a apontar para o mesmo ficheiro que filedes.
+		Se filedes=filedes2, retorna filedes sem fechá-lo.
+
+Ambos os descritores apontam para o mesmo iterador de ficheiro: se um dos
+descritores ler do ficheiro e mover o apontador, a mudança também se reflete
+no outro descritor, etc.
+
+
+
+$ Leitura de um ficheiro $
+
+#include <unistd.h>
+ssize_t read(int filedes, void* buff, size_t nbytes);
+
+	Return: número de bytes lidos, 0 se fim do ficheiro, -1 se erro
+	filedes = descritor do ficheiro
+	buff = apontador para o buffer onde serão colocados os valores lidos.
+	nbytes = número de bytes a ler.
+
+
+
+$ Escrita de um ficheiro $
+
+#include <unistd.h>
+ssize_t write(int filedes, const void* buff, size_t nbytes);
+
+	Return: número de bytes escritos, -1 se erro
+	filedes = descritor do ficheiro
+	buff = apontador para o buffer de onde devem ser lidos os carateres
+	nbytes = número de bytes a escrever.
+
+Se a flag O_APPEND tiver sido especificada ao abrir o ficheiro, o apontador do
+ficheiro é posto a apontar para o fim do ficheiro antes de ser efetuada
+a operação de escrita.
+
+
+
+$ Deslocamento do Iterador $
+
+#include <sys/types.h>
+#include unistd.h>
+
+off_t lseek(int filedes, off_t offset, int whence);
+
+	Return: novo valor do iterador se OK, -1 se erro
+	filedes = descritor do ficheiro
+	offset = deslocamento (pode ser positivo ou negativo)
+	whence = a interpretação dada ao offset:
+		SEEK_SET     offset absoluto, contado a partir do início do ficheiro.
+		SEEK_CUR     offset relativo, contado a partir da posição atual.
+		SEEK_END     offset absoluto, contado a partir do fim do ficheiro.
+
+Para determinar a posição atual do iterador: lseek(fd, 0, SEEK_CUR);
+
+
+
+$ Fecho de um ficheiro $
+
+#include <unistd.h>
+
+int close(int filedes);
+
+	Return: 0 se OK, -1 se erro
+	filedes = descritor do ficheiro
+
+Fechar um descritor que já tinha sido fechado resulta num erro.
+
+Apenas o file descriptor é libertado, não o ficheiro imediatamente.
+Se filedes for o último descritor associado a um ficheiro aberto o kernel liberta
+os recursos associados a esse ficheiro quando se invoca close
+
+
+
+$ Apagamento de um ficheiro $
+
+#include <unistd.h>
+
+int unlink(const char* pathname);
+
+	Return: 0 se OK, -1 se erro
+	pathname = nome do ficheiro
+	Para se apagar um ficheiro é preciso ter permissão de escrita e execução
+	no diretório onde o ficheiro se encontra.
+	O ficheiro só será, de facto, apagado
+	- quando for fechado, caso esteja aberto por ocasião da chamada unlink.
+	- quando a contagem do número de links do ficheiro atingir o valor 0.
+
+
+
+$ Outras funções $
+
+#include <sys/types.h>
+#include <sys/stat.h>
+mode_t umask(mode_t mask);
+	Modifica a mask (parâmetro mode da chamada open)
+	de criação de ficheiros e diretórios para 0777 & mask.
+
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+int stat(const char* pathname, struct stat* buf);
+int fstat(int fd, struct stat* buf);
+int lstat(const char* pathname, struct stat* buf);
+	Retornam uma struct com diversas informações acerca de um ficheiro.
+	Tipo, permissões, tamanho, número de links, hora da última modificação...
+	Existem macros S_ISREG(), S_ISDIR(), ... que permitem determinar qual o
+	tipo de ficheiro, a partir de um campo dessa struct.
+
+
+
+#include <sys/stat.h>
+#include <sys/types.h>
+int mkdir(const char* pathname, mode_t mode);
+	Cria um novo diretório...
+
+
+
+#include <unistd.h>
+int rmdir(const char* pathname);
+	Apaga um diretório vazio...
+
+
+
+(POSIX)
+#include <sys/types.h>
+#include <dirent.h>
+DIR* opendir(const char* name);
+DIR* fopendir(int fd);
+	Abre um directory stream que corresponde ao diretório name ou correspondente
+	ao file descriptor fd...
+
+
+
+(POSIX)
+#include <sys/types.h>
+#include <dirent.h>
+int closedir(DIR* dirp);
+	Fecha um directory stream...
+
+
+
+(POSIX)
+#include <dirent.h>
+struct dirent* readdir(DIR* dirp);
+int readdir_r(DIR* dirp, struct dirent* entry, struct dirent** result);
+	Lê a entrada seguinte da directory stream e avança automaticamente...
+
+
+
+(POSIX)
+#include <sys/types.h>
+#include <dirent.h>
+void rewinddir(DIR* dirp);
+	Retorna a directory stream ao início.
+
+
+
+#include <unistd.h>
+char* getcwd(char* buf, size_t size);
+char* getwd(char* buf);
+char* get_current_dir_name(void);
+	Obtém o nome do diretório atual.
+
+
+
+#include <unistd.h>
+int chdir(const char* path);
+int fchdir(int fd);
+	Muda o diretório atual.
+
+
+
+$$ Biblioteca de C $$
+
+int fd;            <==>       FILE* fp;
+
+open()             <==>       fopen()
+dup(), dup2()      <==>       Pointer duplication
+read()             <==>       fscanf(), fread(), fgets()
+write()            <==>       fprintf(), fwrite(), fputs()
+close()            <==>       fclose()
+lseek()                       feof(), ferror(),
+
+                   ===>       fdopen()
+                   <===       fileno()

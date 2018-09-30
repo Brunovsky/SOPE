@@ -1,0 +1,472 @@
+/***
+ * SOPE InterProcess Communication (#7)
+ *
+ * Bruno Carvalho
+ *
+ */
+
+$$ Sincronização de Processos
+
+* O problena das secções críticas
+* Soluções baseadas em Software
+* Soluções baseadas em Hardware
+* Semáforos
+* Monitores, message queues
+
+
+
+$ Race condition
+
+Situação em que vários processos acedem e manipulam os mesmos
+dados, concorrentemente, e o resultado da execição depende da
+ordem em que se dá o acesso a esses dados.
+
+
+
+$ Secção crítica, entrada, saída
+
+Quando um processo executa código que manipula dados ou recursos
+partilhados diz-que que está na sua secção crítica, para esses
+dados e/ou recursos.
+
+A execução de secções críticas deve ser mutuamente exclusiva:
+em cada instante, apenas um processo poderá estar a executar na
+sua secção crítica (mesmo com múltiplos CPUs).
+
+---> ...
+---> Secção de entrada
+    Secção de código que implementa o pedido de entrada
+    na secção crítica, com acesso exclusivo aos dados partilhados.
+---> Secção crítica
+    Secção de código que lê e/ou modifica os dados partilhados.
+---> Secção de saída
+    Secção de código que declara o fim do acesso exclusivo aos
+    dados partilhados, permitindo que outro processo na fila
+    de espera execute a sua secção crítica.
+---> ...
+
+Requisitos:
+    ** Mutual exclusion
+        Só um processo pode aceder à secção crítica de cada vez.
+            Basic idea: Wait lock na SE.
+    ** Progress
+        Um processo fora da sua secção crítica não pode impedir
+        os outros processos de entrar na secção crítica.
+            Basic idea: Signal unlock na SS.
+    ** No starvation
+        Um processo que peça acesso para entrar numa secção crítica
+        não deve ficar à espera indefinidamente.
+            Basic idea: Queues
+    ~~ No busy waiting
+        De preferência não usar o processador enquanto se espera
+        por acesso à secção crítica.
+    ~~ Simple API
+        Deve ser simples e fácil de usar, mesmo envolvendo um número
+        arbitrário e variável de processos.
+    ~~ No hardware support
+        Não deve requerir incondicionalmente o suporte de hardware.
+
+
+
+$$ Soluções por Software
+
+Algoritmo de Peterson (N = 2):
+Variáveis partilhadas:
+    PID TURN
+    Boolean[N] READY
+
+Inicialmente READY são ambos false, TURN é 0 ou 1...
+
+P[i]:
+    READY[i] = true;
+    TURN = j;                the other process j
+    while READY[j]           give j priority if he so desires
+      and TURN == j          while turn is set to j.
+      {}
+    !... SC ...
+    READY[i] = false;
+
+As instruções TURN = i,j competem, mas no final TURN só pode
+tomar um valor, permitindo a apenas um dos processos que avance
+o while.
+
+--> + Mutual exclusion
+--> + Progress
+--> + No starvation
+--> - No busy waiting
+--> - Simple API
+
+
+
+Algoritmo da Padaria (N >= 2):
+Cada processo recebe um ticket na SE. Entra na SC o processo
+que tiver o menor ticket, usando o PID para desempatar
+
+Variáveis partilhadas:
+    N
+    Boolean[N] CHOOSING
+    Integer[N] TICKET
+
+P[i]:
+    CHOOSING[i] = true;
+    TICKET[i] = max(TICKET[j]...) + 1;
+    CHOOSING[i] = false;
+    for (j = 0; j < N; ++j) {
+        while (CHOOSING[j]) {}
+        while (TICKET[j] != 0                              has ticket
+            && (TICKET[j], j) < (TICKET[i], i)) {}         has priority
+    }
+    !... SC ...
+    TICKET[i] = 0;
+
+--> + Mutual exclusion
+--> + Progress
+--> + No starvation
+--> - No busy waiting
+--> - Simple API
+--> + No hardware support
+
+
+
+$$ Soluções por Hardware
+
+Instruções especiais ATÓMICAS.
+Permitem testar e modificar uma posição de memória
+num único passo (sem interrupção) mesmo com vários CPUs.
+
+A instrução atómica test_and_set:
+    test_and_set(bool &b) {
+        bool ret = b;
+        b = true;
+        return ret;
+    }
+
+    while (test_and_set(LOCK)) {}
+    ...
+
+A instrução atómica swap:
+    swap(bool &a, bool &b) {
+        bool c = a;
+        a = b;
+        b = c;
+    }
+
+    key = true; do { swap(LOCK, key) } while (key);
+
+
+
+Spinlocks:
+
+initLock(LOCK) {
+    LOCK = false;
+}
+
+Lock(LOCK) {
+    white (test_and_set(LOCK)) {}
+}
+
+Unlock(LOCK) {
+    LOCK = false;
+}
+
+SE: Lock(Mutex);
+SC: ...
+SS: Unlock(Mutex);
+
+--> + Mutual exclusion
+--> + Progress
+-->   No starvation (the above has to be improved)
+--> - No busy waiting
+--> + Simple API
+--> - No hardware support
+
+
+
+$$ Semáforos
+
+Semáforo
+- S - Variável inteira inicializada com um valor não negativo.
+- Q - Queue de processos bloqueados em espera para a aceder à
+secção crítica.
+
+Um semáforo inicializado com o valor N permite que até N processos
+acedam simultaneamente à secção crítica.
+
+Depois de inicializada só pode ser atualizada
+através de duas operações atómicas:
+
+    wait(S)     --S;
+                if (S < 0) {
+                    Q.push(ThisProcess);
+                    Block(); // wait for signal
+                }
+    signal(S)   ++S;
+                if (s <= 0) {
+                    Q.pop(); // unblock process at the start of queue
+                }
+
+wait e signal são funções atómicas, portanto têm de estar
+protegidas por mecanismos de sincronização.
+    Usar uma solução por software, com espera ativa muito curta.
+    Usar uma solução por hardware, se suportada.
+
+Um Mutex é um semáforo inicializado com o valor 1, permitindo
+apenas um processo aceder à secção crítica concorrentemente.
+
+Mutex:
+--> + Mutual exclusion
+--> + Progress
+--> + No starvation (the queue must be ordered)
+--> + No busy waiting
+--> - Simple API
+--> + No hardware support (improved by)
+
+Usage:
+
+    wait(SEMAPHORE);   // wait(MUTEX)
+    !... SC ...
+    signal(SEMAPHORE); // signal(MUTEX)
+
+Um mutex é um semáforo booleano 
+
+
+
+
+
+$ Deadlock
+
+Um deadlock envolvendo N processos acontece quando
+cada um dos processos Pi está bloqueado num wait(Si)
+mas o semáforo Si está a ser detido por um outro
+processo Pj, por si à espera de um wait(Sj).
+
+Solução:
+Deadlocks implicam um ciclo. Isso significa que se todos
+os semáforos forem aninhados como uma stack sem ciclos
+não podem existir deadlocks.
+Na prática isto significa: se existir um processo que
+tente deter o semáforo S1 e depois tente deter o semáforo S2
+(antes de libertar o semáforo S1), não deve existir nenhum
+processo que tente deter o semáforo S2 e depois tente deter
+o semáforo S1 (antes de libertar o semáforo S2).
+
+$ Starvation
+
+Um processo esperar por alguma coisa durante imenso tempo,
+podendo esta acontecer ou não.
+
+
+
+$ Monitores
+
+Módulo(s) de um programa que encapsula procedimentos ou
+funcionalidades com race conditions que devem ser resolvidos,
+de forma encapsulada, usando métodos de sincronização como
+semáforos. Não requer suporte da linguagem.
+
+$ Região crítica
+
+Protege uma estrutura de dados partilhada. O compilador
+encarrega-se de gerar código que garante a exclusão
+mútua no acesso aos dados. Requer uma variável V
+declarada como "shared". Requer suporte da linguagem.
+
+
+
+$ Message Queues
+
+Implementados pelo sistema oeprativo, geralmente permitem que
+os processos comuniquem e sincronizem as suas ações.
+
+Há pelo menos 2 operações que devem ser suportadas:
+    send(destination, message)
+    receive(source, message)
+
+O natural é
+    send    -- Não bloquear
+    receive -- Bloquear
+mas podem ser usadas outras combinações.
+
+
+
+
+
+$$$ API de C para IPC
+
+O UNIX suporta:
+    Na mesma máquina:
+        Processos:
+            Pipes e FIFOs
+            Filas de mensagens
+            Named Semáforos
+              Mutexes
+            Memória partilhada ---------+
+        Threads:                        |
+            Unnamed Semáforos           |
+              Mutexes           <-------|
+            Condition variables     <---+
+    Em máquinas diferentes:
+        Sockets
+        TLI - Transport Layer Interface
+        XTI - X/Open Transport Interface
+
+$$ POSIX
+
+Para compilar programas que usem primitivas
+de filas de mensagems, semáforos ou memória partilhada
+é necessário fazer link com a biblioteca realtime (librt.a)
+
+gcc -lrt
+
+
+
+$ Filas de Mensagens -- POSIX Processos
+
+#include <mqueue.h>
+mqd_t mq_open(char* name, int flag, mode_t mode, struct mq_attr* attrp);
+int   mq_send(mqd_t mqid, const char* msg, size_t len, unsigned priority);
+int   mq_receive(mqd_t mqid, char* buf, size_t len, unsigned* prio);
+int   mq_close(mqd_t mqid);
+int   mq_notify(mqd_t mqid, const struct mq_sigevent* sigvp);
+int   mq_getattr(mqd_t mqid, struct mq_attr* attrp);
+int   mq_setattr(mqd_t mqid, struct mq_attr* attrp, struct mq_attr* oattrp);
+
+
+
+$ Semáforos -- POSIX Processos + Threads
+
+Semáforos com nome - Named semaphores
+Podem ser partilhados por vários processos.
+
+Semáforos sem nome - Unnamed semaphores
+Podem ser partilhados por vários processos com memória partilhada
+e entre threads.
+
+
+Named semaphores                             Unnamed semaphores
+
+    sem_open()                                 sem_init()
+                        sem_wait()
+                        sem_trywait()
+                        sem_post()
+
+                        sem_getvalue()
+    sem_close()                                sem_destroy()
+    sem_unlink()
+
+#include <semaphore.h>
+sem_t* sem_open(char* name, int flags, mode_t mode, unsigned value);
+int    sem_unlink(char* name);
+int    sem_init(sem_t* sem, int pshared, unsigned value);
+int    sem_close(sem_t* sem);
+int    sem_destroy(sem_t* sem);
+int    sem_getvalue(sem_t* sem, int* sval);
+int    sem_wait(sem_t* sem);
+int    sem_trywait(sem_t* sem);
+int    sem_post(sem_t* sem);
+
+sem_open:
+    name
+        O nome do semáforo. Deve ser da forma "/something".
+
+
+
+$ Memória partilhada -- POSIX Processos
+
+#include <sys/types.h>
+#Include <sys/mman.h>
+int shm_open(const char* name, int oflag, mode_t mode);
+int shm_unlink(const char* name);
+
+#include <unistd.h>
+#include <sys/types.h>
+int ftruncate(int fd, off_t length);
+
+#include <sys/mman.h>
+void* mmap(void* start, size_t length, int prot, int flags, int fd, off_t offset);
+int munmap(void* start, size_t length);
+
+
+
+$ Mutexes -- POSIX Threads
+
+Sequência típica:
+    Criar e inicializar a variável mutex
+    Váriso threads tentam trancar (lock) o mutex
+    Só um deles consegue. Esse passa a ser o dono do mutex,
+        os outros entram numa fila de espera.
+        O dono do mutex executa as instruções da secção crítica
+        O dono do mutex destranca (unlock) o mutex.
+    O próximo thread na fila de espera adquire o mutex
+        ...
+    Finalmente o mutex é destruído.
+
+#include <pthread.h>
+pthread_mutex_t mutex;
+
+Antes de poder ser usado, um mutex tem de ser inicializado.
+
+Inicialização estática:
+    pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
+Inicialização dinâmica:
+    int pthread_mutex_init(pthread_mutex_t* mutex,
+        const pthread_mutexattr_t* attr);
+    Se attr é NULL é praticamente equivalente a uma
+    inicialização estática.
+
+int pthread_mutex_lock(pthread_mutex_t* mutex);
+int pthread_mutex_trylock(pthread_mutex_t* mutex);
+int pthread_mutex_unlock(pthread_mutex_t* mutex);
+int pthread_mutex_destroy(pthread_mutex_t* mutex);
+
+
+
+
+
+$ Condition variables -- POSIX Threads
+
+Permitem que um thread aceda a uma secção crítica
+apenas quando se verificar uma determinada condição
+sem necessidade de ficar a ocupar o processador
+para testar essa condição. Enquanto ela não se verificar
+o thread fica bloqueado.
+
+Permitem a sincronização com base no valor dos dados:
+são usadas para esperar que estes atenham um certo valor.
+
+#include <pthread.h>
+pthread_cont_t cvar;
+
+Inicialização estática:
+    pthread_cond_t cvar = PTHREAD_cond_INITIALIZER;
+
+Inicialização dinâmica:
+    int pthread_cond_init(pthread_cond_t* cvar,
+            const pthread_condattr_t *attr);
+    Se attr é NULL é praticamente equivalent a uma
+    inicialização estática.
+
+int pthread_cond_wait(pthread_cond_t* cvar, pthread_mutex_t* mutex);
+int pthread_cond_signal(pthread_cond_t* cvar);
+int pthread_cond_broadcast(pthread_cond_t* cvar);
+int pthread_cond_destroy(pthread_cond_t* cvar);
+
+
+
+$ Notas: Mutexes e condition variables -- POSIX Threads, Processos
+
+Os mutexes e condition variables poderão ser partilhados
+entre processos, se forem criados em memória partilhada
+e inicializados com um attributo em que se inclua a
+propriedade PTHREAD_PROCESS_SHARED
+
+Em Linux os threads são implementados através da chamada
+clone() a qual cria um processo-filho do processo que a
+invocou partilhando parte do contexto do processo-pai.
+
+As funções invocadas num thread têm de ser thread-safe
+As funções thread-unsafe são tipicamente funções
+não-reentrantes que guardam resultados em variáveis partilhadas.
+Em UNIX, algumas chamadas de sistema que são thread-unsafe
+têm versões thread-safe (têm o mesmo nome acrescido de _r).

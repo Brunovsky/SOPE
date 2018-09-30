@@ -1,0 +1,138 @@
+    0.25 -    29554 - T  29554 - OPEN registry/textfile101fts.txt
+    0.40 -    29554 - BEGIN TRAVERSAL OF ALL FILES
+    0.64 -    29554 - T  29555 - NEW
+    0.66 -    29554 - T  29556 - NEW
+    0.68 -    29554 - T  29557 - NEW
+    0.71 -    29554 - T  29558 - NEW
+    0.93 -    29554 - NEW PROCESS 29559
+    0.98 -    29554 - T  29555 - FINISHED
+    1.14 -    29559 - SHELL:  grep -i -n -c -H --color=auto Lorem ipsum dolor sit amet folder/0_ReadMe.txt
+    1.33 -    29554 - NEW PROCESS 29560
+    1.38 -    29554 - T  29556 - FINISHED
+    1.45 -    29554 - T  29561 - NEW
+    1.51 -    29560 - SHELL:  grep -i -n -c -H --color=auto Lorem ipsum dolor sit amet folder/1.txt
+    1.72 -    29554 - NEW PROCESS 29562
+    1.79 -    29554 - T  29557 - FINISHED
+    1.88 -    29554 - T  29563 - NEW
+    1.96 -    29554 - T  29564 - NEW
+    1.95 -    29562 - SHELL:  grep -i -n -c -H --color=auto Lorem ipsum dolor sit amet folder/2.txt
+    2.21 -    29554 - NEW PROCESS 29565
+    2.26 -    29554 - T  29563 - FINISHED
+    2.50 -    29565 - SHELL:  grep -i -n -c -H --color=auto Lorem ipsum dolor sit amet folder/index.txt
+    2.61 -    29554 - NEW PROCESS 29566
+    2.82 -    29554 - T  29561 - FINISHED
+    2.90 -    29554 - NEW PROCESS 29567
+    2.94 -    29554 - T  29558 - FINISHED
+    3.15 -    29554 - T  29569 - NEW
+    3.23 -    29566 - SHELL:  grep -i -n -c -H --color=auto Lorem ipsum dolor sit amet folder/4.txt
+    3.25 -    29567 - SHELL:  grep -i -n -c -H --color=auto Lorem ipsum dolor sit amet folder/3.txt
+    3.42 -    29554 - T  29568 - NEW
+    3.67 -    29554 - NEW PROCESS 29572
+    3.73 -    29554 - T  29569 - FINISHED
+    4.06 -    29554 - T  29573 - NEW
+    4.12 -    29572 - SHELL:  grep -i -n -c -H --color=auto Lorem ipsum dolor sit amet folder/subfolder1/11.txt
+    4.29 -    29554 - SIGNAL IN SIGCHLD
+    4.33 -    29554 - T  29571 - NEW
+    4.33 -    29554 - WAITPID (PROCESS 29559) (STATUS 0x0100) (LEFT: 6)
+    4.41 -    29554 - T  29581 - NEW
+    4.45 -    29554 - END TRAVERSAL OF ALL FILES
+    4.58 -    29554 - SIGNAL IN SIGCHLD
+    4.62 -    29554 - T  29575 - NEW
+    4.60 -    29554 - T  29574 - NEW
+    4.62 -    29554 - NEW PROCESS 29585
+    4.63 -    29554 - T  29580 - NEW
+    4.77 -    29585 - SHELL:  grep -i -n -c -H --color=auto Lorem ipsum dolor sit amet folder/loremc.txt
+    4.78 -    29554 - T  29570 - NEW
+    4.78 -    29554 - T  29577 - NEW
+    4.78 -    29554 - SIGNAL IN SIGCHLD
+    4.80 -    29554 - T  29576 - NEW
+    4.81 -    29554 - T  29582 - NEW
+    4.81 -    29554 - T  29578 - NEW
+    4.81 -    29554 - NEW PROCESS 29586
+    4.91 -    29586 - SHELL:  grep -i -n -c -H --color=auto Lorem ipsum dolor sit amet folder/subfolder1/10.txt
+    4.95 -    29554 - WAITPID (PROCESS 29562) (STATUS 0x0100) (LEFT: 6)
+    4.97 -    29554 - NEW PROCESS 29587
+    4.97 -    29554 - WAITPID (PROCESS 29565) (STATUS 0x0100) (LEFT: 6)
+    4.98 -    29554 - T  29573 - FINISHED
+    4.98 -    29554 - T  29564 - FINISHED
+    4.82 -    29554 - T  29583 - NEW
+    4.83 -    29554 - T  29584 - NEW
+    4.83 -    29554 - WAITPID (PROCESS 29560) (STATUS 0x0100) (LEFT: 7)
+    5.05 -    29587 - SHELL:  grep -i -n -c -H --color=auto Lorem ipsum dolor sit amet folder/subfolder2/5.txt
+    5.09 -    29554 - T  29568 - FINISHED
+    5.11 -    29554 - NEW PROCESS 29588
+    5.12 -    29554 - SIGNAL IN SIGCHLD
+    5.12 -    29554 - T  29578 - FINISHED
+    5.13 -    29554 - WAITPID (PROCESS 29567) (STATUS 0x0100) (LEFT: 6)
+    5.27 -    29554 - NEW PROCESS 29589
+    5.28 -    29554 - T  29583 - FINISHED
+    5.31 -    29554 - T  29579 - NEW
+    5.41 -    29554 - SIGNAL IN SIGCHLD
+    5.40 -    29589 - SHELL:  grep -i -n -c -H --color=auto Lorem ipsum dolor sit amet folder/subfolder2/subfolder3/lorem-ipsum.txt
+    5.42 -    29554 - WAITPID (PROCESS 29566) (STATUS 0x0100) (LEFT: 6)
+    5.42 -    29554 - SIGNAL IN SIGCHLD
+    5.43 -    29554 - WAITPID (PROCESS 29572) (STATUS 0x0100) (LEFT: 5)
+    5.55 -    29554 - NEW PROCESS 29591
+    5.56 -    29554 - T  29581 - FINISHED
+    5.62 -    29591 - SHELL:  grep -i -n -c -H --color=auto Lorem ipsum dolor sit amet folder/subfolder2/subfolder3/lorem-ipsum-5.txt
+    5.70 -    29554 - NEW PROCESS 29592
+    5.71 -    29554 - T  29575 - FINISHED
+    5.83 -    29554 - NEW PROCESS 29593
+    5.85 -    29554 - T  29574 - FINISHED
+    5.93 -    29554 - NEW PROCESS 29594
+    5.94 -    29554 - T  29580 - FINISHED
+    5.94 -    29593 - SHELL:  grep -i -n -c -H --color=auto Lorem ipsum dolor sit amet folder/subfolder2/6.txt
+    6.04 -    29554 - NEW PROCESS 29595
+    6.06 -    29554 - T  29577 - FINISHED
+    6.16 -    29554 - NEW PROCESS 29596
+    6.17 -    29554 - T  29576 - FINISHED
+    6.19 -    29595 - SHELL:  grep -i -n -c -H --color=auto Lorem ipsum dolor sit amet folder/subfolder2/subfolder3/9.txt
+    6.26 -    29554 - SIGNAL IN SIGCHLD
+    6.26 -    29588 - SHELL:  grep -i -n -c -H --color=auto Lorem ipsum dolor sit amet folder/subfolder2/subfolder3/lorem-ipsum-2.txt
+    6.27 -    29554 - NEW PROCESS 29597
+    6.27 -    29554 - WAITPID (PROCESS 29587) (STATUS 0x0100) (LEFT: 11)
+    6.29 -    29554 - T  29582 - FINISHED
+    6.40 -    29554 - NEW PROCESS 29598
+    6.42 -    29554 - T  29584 - FINISHED
+    6.48 -    29598 - SHELL:  grep -i -n -c -H --color=auto Lorem ipsum dolor sit amet folder/subfolder2/subfolder3/words.txt
+    6.54 -    29554 - NEW PROCESS 29599
+    6.55 -    29554 - T  29579 - FINISHED
+    6.57 -    29597 - SHELL:  grep -i -n -c -H --color=auto Lorem ipsum dolor sit amet folder/subfolder2/subfolder3/lorem-ipsum-6.txt
+    6.63 -    29599 - SHELL:  grep -i -n -c -H --color=auto Lorem ipsum dolor sit amet folder/subfolder2/subfolder3/lorem-ipsum-3.txt
+    6.67 -    29554 - NEW PROCESS 29600
+    6.69 -    29554 - T  29571 - FINISHED
+    6.74 -    29592 - SHELL:  grep -i -n -c -H --color=auto Lorem ipsum dolor sit amet folder/subfolder2/7.txt
+    6.81 -    29554 - NEW PROCESS 29601
+    6.82 -    29554 - T  29570 - FINISHED
+    7.46 -    29600 - SHELL:  grep -i -n -c -H --color=auto Lorem ipsum dolor sit amet folder/subfolder1/dummy.txt
+    7.49 -    29594 - SHELL:  grep -i -n -c -H --color=auto Lorem ipsum dolor sit amet folder/subfolder2/subfolder3/lorem-ipsum-4.txt
+    7.52 -    29601 - SHELL:  grep -i -n -c -H --color=auto Lorem ipsum dolor sit amet folder/subfolder1/12.txt
+    7.95 -    29554 - SIGNAL IN SIGCHLD
+    7.99 -    29554 - WAITPID (PROCESS 29586) (STATUS 0x0100) (LEFT: 14)
+    8.02 -    29554 - WAITPID (PROCESS 29589) (STATUS 0x0000) (LEFT: 13)
+    8.05 -    29554 - WAITPID (PROCESS 29595) (STATUS 0x0100) (LEFT: 12)
+    8.07 -    29554 - WAITPID (PROCESS 29598) (STATUS 0x0100) (LEFT: 11)
+    8.12 -    29554 - WAITPID (PROCESS 29585) (STATUS 0x0000) (LEFT: 10)
+    8.20 -    29554 - SIGNAL IN SIGCHLD
+    8.23 -    29554 - WAITPID (PROCESS 29593) (STATUS 0x0100) (LEFT: 9)
+    8.35 -    29554 - SIGNAL IN SIGCHLD
+    8.36 -    29554 - WAITPID (PROCESS 29600) (STATUS 0x0100) (LEFT: 8)
+    9.49 -    29554 - SIGNAL IN SIGCHLD
+    9.50 -    29554 - WAITPID (PROCESS 29601) (STATUS 0x0100) (LEFT: 7)
+    9.85 -    29596 - SHELL:  grep -i -n -c -H --color=auto Lorem ipsum dolor sit amet folder/subfolder2/subfolder3/8.txt
+   10.96 -    29554 - SIGNAL IN SIGCHLD
+   10.98 -    29554 - WAITPID (PROCESS 29596) (STATUS 0x0100) (LEFT: 6)
+   12.21 -    29554 - SIGNAL IN SIGCHLD
+   12.23 -    29554 - WAITPID (PROCESS 29592) (STATUS 0x0100) (LEFT: 5)
+   16.59 -    29554 - SIGNAL IN SIGCHLD
+   16.60 -    29554 - WAITPID (PROCESS 29588) (STATUS 0x0000) (LEFT: 4)
+   18.22 -    29554 - SIGNAL IN SIGCHLD
+   18.23 -    29554 - WAITPID (PROCESS 29591) (STATUS 0x0000) (LEFT: 3)
+   20.71 -    29554 - SIGNAL IN SIGCHLD
+   20.72 -    29554 - WAITPID (PROCESS 29597) (STATUS 0x0000) (LEFT: 2)
+   27.71 -    29554 - SIGNAL IN SIGCHLD
+   27.73 -    29554 - WAITPID (PROCESS 29599) (STATUS 0x0000) (LEFT: 1)
+   28.37 -    29554 - SIGNAL IN SIGCHLD
+   28.39 -    29554 - WAITPID (PROCESS 29594) (STATUS 0x0000) (LEFT: 0)
+   28.40 -    29554 - EXIT PROCESS 29554
+   28.40 -    29554 - T  29554 - CLOSE registry/textfile101fts.txt

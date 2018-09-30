@@ -1,0 +1,123 @@
+/***
+ * SOPE Unix Man Pages
+ *
+ * Bruno Carvalho
+ *
+ */
+
+$$ Unix Manual Section - man COMMAND $$
+
+Access through man man.
+
+man is the system's manual pager.
+Each page argument given to man is normally the name of a PROGRAM, UTILITY, FUNCTION.
+The manual page associated with each of these arguments is then found and displayed.
+A section, if provided, will direct man to look only in that section of the manual.
+The default action is to search in all of the available sections following a
+pre-defined order ("1  n 1 8 3 2 3posix 3pm 3perl 5 4 9 6 7" by default), and to show
+only the first page found, even if page exists in several sections.
+
+
+	The standard section of the manual include:
+
+	0		Header files
+	0p		Header files (POSIX)
+	1 		User Commands (Executable programs or shell commands)
+	1p		User Commands (POSIX)
+	2		System Calls (functions provided by the kernel)
+	3		Library Functions (functions within program libraries)
+	3n		Network Functions
+	3p 		Perl Modules
+	4		Devices and Special Files (usually found in /dev)
+	5		File Formats and Conventions (e.g. /etc/passwd)
+	6		Games et. al.
+	7		Miscellanea (including macro packages and conventions)
+	8		System Administration tools (usually only for root)
+	9		Kernel routines (Non standard)
+	l 		Local documentation
+	n 		New Manpages
+
+	Distributions customize the manual section to their specifics,
+	which often include additional sections.
+
+Conventional section names include:
+	NAME
+	SYNOPSYS
+	CONFIGURATION
+	DESCRIPTION
+	OPTIONS
+	EXIT STATUS
+	RETURN VALUE
+	ERRORS
+	ENVIRONMENT
+	FILES
+	VERSION
+	CONFORMING TO
+	NOTES
+	BUGS
+	EXAMPLE
+	AUTHORS
+	SEE ALSO
+
+
+
+$ Man Examples $
+
+	man ls
+		Display the first found manual page for the item (program) ls.
+
+	man -a intro
+		Display, in succession, all of the available intro manual pages contained
+		within the manual. It is possible to quit between successive displays or
+		skip any of them.
+
+	man -k printf
+		Search the short descriptions and manual page names for the keyword printf
+		as regular expression. Print out any matches.
+
+	man -f smail
+		Lookup the manual pages referenced by smail and print otu the short descriptions
+		of any found. Equivalent to whatis small.
+
+
+
+$ Man Options $
+	
+	-f, --whatis
+		Equivalent to whatis. Display a short description from the manual page,
+		if available. See whatis(1) for details.
+
+	-k, --apropos
+		Equivalent to apropos. Search the short manual page descriptions for keywords
+		and display any matches. See apropos(1) for details.
+
+	-K, --global-apropos
+		Search for text in all manual pages. This is a brute-force search, and is
+		likely to take some time; if you can, you should specify a section to reduce
+		the number of pages that need to be searched. Search terms may be simple strings,
+		the default, or regex if the --regex options is used.
+
+	-w, --where, --path, --location
+		Do not actually display the manual pages, but print the locations of the
+		source files that would be formatted.
+
+	-W, --where-cat, --location-cat
+		Do not actually display the manual pages, but print the location of the cat
+		manual pages that would be displayed.
+
+	-a, --all
+		By default, man will exit after displaying the most suitable manual page
+		it finds. This forces man to display all the manual pages with names that
+		match the search criteria, successively.
+
+	-?, --help
+		Print a help message and exit.
+
+	--usage
+		Print a short usage message and exit.
+
+	-V, --version
+		Display version information.
+
+
+See also: info (GNU)

@@ -1,0 +1,129 @@
+/***
+ * SOPE Teoria dos Sistemas Operativos #2
+ *
+ * Bruno Carvalho
+ *
+ */
+
+
+$$ Arquitetura Von-Neumann $
+
+CPU + Memória principal + I/O + Ligações externas
+
+
+
+$$ Registos do CPU $$
+
+> PC - Program Counter
+Contém o endereço da próxima instrução
+
+> IR - Instruction Register
+Contém a instrução atual
+
+> PSW - Processor Status Word
+Contém informação acerca do estado do processador,
+interrupções, flags, privilégios, ...
+
+> SP - Stack Pointer
+Aponta para o topo da stack
+
+> Registos do USER
+Usados para vários fins...
+
+> Outros
+Gestão de memória, ...
+
+
+
+$ Classes de Interrupções $
+
+> Programa
+	Geradas por uma condição que resulta da execução
+	de uma instrução (overflow, divisão por zero, ...)
+
+> Timer
+	Geradas por um temporizador, permite que o OS
+	execute certas tarefas regularmente.
+
+> I/O
+	Geradas por um controlador de I/O. Para assinalar
+	o fim de uma operação ou certos erros.
+
+> Falhas de Hardware
+	Geradas por uma falha, e.g. alimentação, erro de paridade.
+
+
+
+$ Processamento de uma interrupção $
+
+	Hardware
+	1) Interrupção
+	2) CPU termina instrução atual
+	3) CPU assinala aceitação da interrupção
+	4) CPU guarda PSW e PC na stack
+	5) CPU carrega PC para o endereço do interrupt handler
+
+	OS
+	6) Guarda restante informação do estado do processo
+	(registos do processador, ...)
+	7) Processar a interrupção (executar rotina)
+	8) Restaurar informação do estado do processo
+	9) Restaurar PSW e PC
+
+
+
+$ Interrupções múltiplas $
+	
+	Processamento sequencial
+	Inibir mais interrupções durante o tratamento de uma interrupção.
+
+	Processamento embutido
+	Algumas interrupções são mais importantes do que outras.
+
+
+
+$ Gestão de I/O $
+
+	3 Mecanismos para executar I/O
+
+	I/O programada (polling)
+	I/O por interrupção
+	Acesso direto à memória
+		Necessário um controlador de DMA ligado ao barramento.
+		Quando é necessário fazer I/O:
+			O processador informa o controlador do dispositivo de I/O
+			do que pretende fazer e onde está ou vai ficar a informação a transferir.
+			O processador continua a executar outras instruções.
+			O DMA transfere a informação diretamente de/para a memória.
+			Quando o DMA termina é gerada outra interrupção.
+
+
+
+$ Memória $
+
+	HIERARQUIA
+		Registos
+		Cache L1
+		Cache L2
+		Cache L3
+		Memória principal (RAM)
+		Cache de disco
+		Disco magnético
+		Disco óptico / Fita magnética
+
+
+
+
+$ Booting $
+		Após o POST (Power On Self Test) que verifica o estado do hardware
+	é feito o reset do processador.
+		O processador procura uma instrução no endereço 0xFFFFFFF0.
+		A instrução neste endereço é um salto para o início do BIOS, em ROM.
+		A BIOS determina, na sua configuração, qual o boot device (disquete, disco...).
+		A BIOS lê o MBR-Master Boot Record do boot device. O MBR contém informação
+	acerca das partições existentes no disco e o endereço do boot sector.
+		A BIOS carrega, em RAM, um pequeno programa, contido neste sector que poderá,
+	por sua vez executar outros programas, cuja execução culminará com o
+	carregamento do sistema operativo.
+		O sistema operativo executa vários procedimentos de inicialização.
+		Alguns processos começam a ser executados.

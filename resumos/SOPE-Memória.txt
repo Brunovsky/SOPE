@@ -1,0 +1,338 @@
+/**
+ * SOPE Gestão de Memória
+ *
+ *
+ */
+
+$$ Técnicas de Gestão de Memória
+
+Alocação contígua:
+    Partição fixa
+        partições de tamanho igual
+        partições de tamanho diferente
+    Partição dinâmica
+
+Alocação não contígua:
+    Paginação
+    Segmentação
+    Segmentação com paginação
+
+
+$ Partição fixa
+
+A memória destinada aos processos do user é dividida
+em partições de tamanho fixo: blocos com tamanho X1,
+blocos com tamanho X2, ...
+
+O Sistema Operativo mantém uma tabela com indicação das partições
+ocupadas, e os ocupantes.
+
+Tamanhos comuns: 1 MB, 512 KB, 4 MB, ...
+
+Dificuldades:
+Um programa pode não caber na partição:
+    Solução:
+        Usar overlays
+        Recolocar numa partição maior
+Fragmentação interna:
+    Utilização ineficiente da memória quando
+    o programa não ocupa a partição toda.
+
+Mecanismo de proteção:
+    Par de registos onde são carregados os endereços máximo
+    e mínimo da partição atual.
+Algoritmo de colocação:
+    Tamanho igual:
+        carregar o processo em qualquer partição disponível.
+    Tamanho diferente:
+         atribuir o processo à menor partição em que
+        ele cabe (mínimo desperdício) -> pode gerar filas nas partições.
+    ou   escolher a menor partição disponível capaz de conter o processo
+        quando ele for carregado -> uma fila única para todas as partições.
+
+Desvantagens:
+    O número de partições limita o número de processos ativos.
+    O tamanho das partições é fixado por ocasião da geração do S.O.
+    --> utilização ineficiente da memória, quando os processos são pequenos.
+
+
+$ Partição dinâmica
+
+Inicialmente, quando não há nenhum processo carregado...
+--> Existe uma única partição, ocupando toda a memória.
+
+Quando é executado um programa...
+--> Alocar zona de memória para a sua partição.
+
+O número de partições e o seu tamanho é variável.
+
+Quando um processo termina, a memória é libertada e pode ser usada
+para carregar outro programa.
+
+Ao fim de algum tempo existirão fragmentos de memória inutilizada
+esplhados pela memória do computador (fragmentação externa).
+
+De tempos a tempos a memória terá de ser compactada.
+
+A dimensão dos programas está limitada pela memória física, não pelas partições.
+Não é necessário parar o sistema para reconfigurar as partições.
+
+Mecanismo de proteção:
+    Par de registos onde são carregados os endereços máximo
+    e mínimo da partição atual.
+Algoritmo de colocação:
+    first-fit: Alocar o 1º bloco livre com tamanho suficiente
+        (Começar pesquisa no 1º bloco livre)
+    next-fit: Alocar o 1º bloco livre com tamanho suficiente
+        (Começar pesquisa no 1º bloco livre a seguir àquele em que
+        terminou a última pesquisa, round-a-round)
+    best-fit: Alocar o bloco livre mais pequeno que tenha tamanho suficiente.
+        (Pesquisara a lista de blocos livres toda)
+    worst-fit: Alocar o bloco livre maior.
+        (na expetativa de que o que sobra ainda tenha tamanho suficiente
+        para ser útil)
+    buddy-system: Ir dividindo a memória livre, sucessivamente,
+        em blocos de tamanho 2^k (buddies - blocos em que se divide
+        o bloco anterior) até ter um bloco livre em que o processo caiba
+        com menor desperdício).
+
+Algoritmo de substituição - partição dinâmica
+Quando não há memória livre para carregar um processo, mesmo
+após compactação, que processo retirar da memória para ganhar espaço livre?
+
+Problemas:
+    Fragmentação externa, qualquer que seja o algoritmo de alocação usado.
+    Perda de tempo na gestão de buracos livres muito pequenos (sem utilidade)
+    Necessidade de compactação:
+        Consome tempo.
+        capacidade de recolocação dinâmica.
+        Difícil arranjar estratégia ótima.
+
+
+
+$$ Estruturas de dados usadas na gestão de memória
+
+Mapas de bits
+    Dividir a memória em blocos.
+    A cada bloco é associado um bit que indica se ele está ocupado
+    ou não.
+    Tamanho da memória e dos blocos determinam o número de bits necessários.
+    Dificuldade: overhead necessário para encontrar o número de blocos livres
+    consecutivos necessários para carregar um programa.
+
+Listas ligadas:
+    Manter uma lista duplamente ligada de blocos lives e ocupados
+    (em geral por ordem crescente de endereços)
+    Vantagem: fácil fazer a junção de 2 blocos livres contíguos,
+    quando um processo liberta memória.
+
+
+    Mecanismos de gestão de memória anteriores:
+    A memória alocada a um processo é contígua.
+    Problema: utilização ineficiente da memória
+        partição fixa --> fragmentação interna
+        partição dinâmica --> fragmentação externa
+
+$ Paginação
+
+O espaço de endereçamento físico de um processo pode ser não-contíguo.
+
+Objetivos da paginação:
+
+Facilitar a alocação.
+Facilitar o swapping.
+Reduzir a fragmentação da memória.
+
+Método básico:
+
+Dividir a memória FÍSICA em blocos de tamanho fixo chamados frames (quadros)
+Dividir a memória LÓGICA em blocos de tamanho fixo chamados páginas.
+    A dimensação das páginas é igual à dos frames.
+    A dimensão das páginas depende da arquitetura da máquina.
+    Algumas máquinas suportam vários tamanhos de página.
+As páginas constituintes de um processo são carregadas em quaisquer
+frames livres.
+O S.O. mantém uma tabela de páginas (page table), por cada processo, que
+estabelece a correspondência entre páginas e frames.
+
+O utilizador continua a ver a memória como um único espaço contíguo.
+O mapeamento entre os espaços de endereçamento lógico e físico
+está escondido do utilizador, sendo feito sob controlo do S.O.
+com auxílio de hardware especial (MMU).
+
+Logical memory               Physical memory
+    Page 0        0 [1]         0
+    Page 1        1 [4]         1  page 0
+    Page 2        2 [3]         2
+    Page 3        3 [7]         3  page 2
+                                4  page 1
+                                5
+                                6
+                                7  page 3
+
+Hardware de Suporte:
+Método geral de tradução de endereços
+  Dividir o endereço lógico pelo tamanho da página para determinar o
+número da página.
+  Aceder à tabela de páginas para determinar o endereço base do frame.
+  Adicionar o deslocamento (offset) do endereço ao endereço base
+  do frame, obtendo o endereço físico.
+
+  Efis = Pag[Log / TamanhoPorPagina] + (Log % TamanhoPorPagina).
+
+Na prática
+    Usar tamanhos de página que sejam potências de 2.
+    Permite usar shifts para realizar DIV e MOD, extrair
+    diretamente do endereço lógico os bits que foram o número da página
+    e o deslocamento.
+
+
+
+$$$ Memória Virtual
+
+Demand paging / Paginação a pedido
+Performance da paginação a pedido
+Substituição de páginas
+Algoritmos de substituição de páginas
+Alocação de frames
+Thrashing
+Demand segmentation
+
+
+Memória virtual é uma limitação importante dos mecanismos de
+gestão de memória descritos anteriormente: todo o espaço de
+endereçamento lógico de um processo deve estar em memória
+física, simultaneamente.
+
+Isto pode ter um efeito adverso no grau de multiprogramação dado
+que pode limitar o número de processos que podem correr simultaneamente.
+
+No entanto, os programas não necessitam de aceder a todo o espaço
+de endereçamento simultaneamente:
+    há partes do programa que raramente são executadas -- cold
+    há dados que raramente/nunca são acedidos -- cold
+
+Além disso verifica-se normalmente que as referências ao programa
+(instruções) e dados tendem a ser localizadas em períodos curtos
+de tempo (localidade de referência)
+
+Memória virtual permite a execução dep rocessos que podem não
+estar completamente em memória principal.
+    Um processo pode executar com apenas parte do seu espaço de
+    endereçamento lógico carregado na memória física.
+
+O espaço de endereçamento lógico pode pois ser muito maior do que o espaço
+de endereçamento físico.
+    O user vê uma memória potencialmente muito maior - memória virtual
+    - do que a memória real.
+
+O que é necessário:
+    Divisão de um processo em páginas ou segmentos.
+    Tradução dos endereços virtuais em endereços reais executada pelo S.O.
+    + hardware em runtime.
+    Mecanismo de transferência do conteúdo da memória lógica (em disco)
+    para memória física, à medida que for necessário (swapping incremental).
+
+$ Overlays
+
+Parte da memória é reservada para uma secção de overlay.
+
+Partes do programa identificadas pelo user, são compiladas e linkadas de modo
+a poderem correr nos endereços da secção de overlay.
+
+Um overlay driver (sob controlo do programa) carrega diferentes overlays
+da memória secundária para a secção de overlay.
+
+O carregamento é feito dinamicamente: os procedimentos e dados são
+trazidos para memória quando necessário, através de código gerado pelo
+compilador (ex: a chamada a uma função testa primeiro se ela está em memória)
+
+Problema:
+    Os overlays não podiam referenciar-se mutuamente.
+    É tudo responsabilidade do programador/compilador.
+
+
+
+$ Demand Paging
+
+Semelhante à paginação convencional exceto que as páginas só são transferidas
+para a memória principal quando são necessárias.
+Pode conduzir a
+    redução de I/O
+    resposta mais rápida (só se carregam as páginas necessárias)
+    redução da memória necessária por processo
+    maior grau de multiprogramação
+    mais utilizadores
+
+Quando é referenciada uma página:
+    Se a referência é inválida -> abortar
+    Se a referência é válida e a página não está em memória -> trazê-la para memória.
+
+Bit de página válida/inválida (presente/ausente)
+    1 = presente e válida
+    0 = ausente ou inválida
+
+Falta de página -> trap para o S.O.
+    Verificar na tabela de páginas se a referência é válida ou inválida.
+    Se inválida abortar.
+    Se válida continuar (trazer a página para memória principal)
+    Obter um frame livre.
+    Ler a página necessária.
+    Atualizar a tabela de páginas com a indicação de que página está
+    em memória, e em que frame está.
+    Recomeçar a instrução interrompida devido à falta de página.
+
+Se não houver frames/quadros livres?
+    Substituição de página:
+    encontrar uma página em memória que não esteja a ser utilizada e fazer o swap out
+    dessa página --> algoritmo de substituição de página, que resulte
+    num mínimo de faltas de página.
+
+Suporte de hardware necessário:
+    tabela de páginas, com bit válido/inválido.
+    Possibilidade de recomeçar uma instrução que falhou devido a uma falta de página,
+    a chamar no retorno de TRAP.
+        Guardar o estado inicial de uma instrução e repô-lo após o trap.
+        Por vezes os processadores guardam um estado de execução parcial
+        e continuam a instrução onde ela foi interrompida.
+        Dificuldade principal: instruções que movimentam blocos de dados.
+    Disco rápido para guardar as páginas que não estão em memória.
+
+
+$ Performance da paginação a pedido
+
+Tefetivo = (1 - p).Tacesso + p.Tfalha
+    Tefetivo - Tempo efetivo de acesso à memória.
+    Tacesso  - Tempo de acesso à memória válida e presente.
+    Tfalha   - Tempo que o S.O. demora a processar uma falta de página.
+
+O princípio da localidade de referência indica que p deve ser próximo de 0.
+
+
+
+Quantos frames atribuir a um processo?
+Algoritmo de alocação de frames
+
+Que páginas substituir e quando?
+Algoritmo de substituição de páginas
+
+
+$ Algoritmo de substituição de páginas
+
+- FIFO
+- Ótimo
+- LRU e LRU aproximado
+- Baseados em contagens (LFU e MFU)
+
+Como avaliar um algoritmo?
+Avaliam-se os algoritmos aplicando-os a uma determinada sequência de referências à
+memória e determinando o número de faltas de página nessa sequência.
+
+Sequência (basta o número das páginas referenciadas)
+    aleatória
+    seguimento das referências de um sistema real
+Determinação do número de faltas de página => conhecer o número de frames disponíveis
+
+Em geral, se
+    número de frames aumenta ==> número de faltas de página desce
+

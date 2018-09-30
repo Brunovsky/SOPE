@@ -1,0 +1,395 @@
+/***
+ * SOPE Signals Unix e POSIX (#3)
+ *
+ * Bruno Carvalho
+ *
+ */
+
+Nota: Sinais estão deprecados.
+
+
+$$ Sinal $$
+
+Um sinal é uma notificação, por software, de um acontecimento,
+entre processos - base da comunicação entre processos.
+
+Possíveis origens de um sinal:
+	Teclado: Ctrl+C, Ctrl+Z, Ctrl+\
+	Hardware: Referência inválida à memória
+	Função de sistema kill
+		Permite que um processo envie um sinal a outro processo
+		ou conjunto de processos.
+	Comando kill
+		Permite enviar um sinal a um processo ou conjunto
+		de processos a partir de uma shell.
+	Software
+		Certos acontecimentos gerados por software dão origem a
+		sinais, e.g. um alarme.
+
+Sinais podem ser gerados
+	sincronamente
+		associados a uma certa ação executada pelo próprio processo
+		(acesso inválido a memória)
+	assincronamente
+		gerados por eventos exteriores ao processo que recebe o sinal.
+
+Os processos podem informar o kernel do que este deve fazer quando ocorrer
+um determinado sinal.
+
+
+
+$ Lista de Sinais $
+
+Nome 		Ação por omissão   Origem     Descrição
+SIGINT      Terminar           Ctrl+C     Terminar processo 
+SIGQUIT     Terminar           Ctrl+\     Terminar processo e gerar core dump
+SIGTSTP     Suspender          Ctrl+Z     Suspender processo (job control)
+SIGCONT     Continuar          fg, bg     Continuar processo suspenso
+SIGKILL     Terminar           OS         Terminar processo (non catchable)
+SIGSTOP     Suspender          OS         Parar a execução (non catchable)
+SIGTERM     Terminar           OS, kill   Terminar processo
+SIGABRT     Terminar           abort()    Terminar processo anormalmente
+SIGALRM     Terminar           alarm()    Alarme
+SIGSEGV     Terminar           hardware   Referência a memória inválida
+SIGFPE      Terminar           hardware   Excepção aritmética
+SIGILL      Terminar           hardware   Instrução ilegal
+SIGUSR1     Terminar           ---        User defined
+SIGUSR2     Terminar           ---        User defined
+SIGCHLD     Ignorar            Filho      O processo filho terminou
+...
+
+
+
+$ Respostas a um sinal $
+
+Respostas possíveis a um sinal:
+	Ignorar
+		A maior parte dos sinais podem ser ignorados.
+		SIGKILL e SIGSTOP não podem ser ignorados.
+
+	Tratar (catch)
+		Indicar uma função a executar (signal handler) quando o sinal ocorrer.
+		Quando um processo termina ou pára, SIGCHLD é enviado ao processo pai.
+
+	Ação por omissão
+
+
+
+# Função Signal $
+
+#include <signal.h>
+void (*signal(int signo, void (*func)(int)))(int);
+sighandler signal(int signo, sighandler funct);
+
+Função recebe um inteiro signo e uma função do tipo void(int), que é o signal handler
+
+	Return: O signal handler anterior, ou SIG_ERR se aconteceu um erro.
+	signo = Sinal que deve ser tratato pelo signal handler.
+	sighandler: uma função do tipo void(int).
+
+SIG_ERR (error)
+	Usada para testar se signal retornou erro
+
+SIG_DFL (default)
+	Usada com 2º argumento de signal.
+	Indica que deve ser usado o handler por omissão
+	para o sinal especificado como 1º argumento.
+
+SIG_IGN (ignore)
+	Usada como 2º argumento de signal.
+	Indica que o sinal especificado como 1º argumento deve ser ignorado.
+
+Usar:
+
+signal(SIGX, SIG_IGN);
+
+para declarar que queremos ignorar o sinal X. Por exemplo signal(SIGCHLD, SIG_IGN).
+
+
+
+$ Tratamento de Sinais Fork, Exec $
+
+Após fork() o tratamento de sinais é herdado pelo filho,
+mas é completamente independente. Isto é possível pois o filho tem acesso
+ao mesmo código que o processo-pai.
+
+Após exec() o tratamento de sinais é reiniciado, mas o novo programa
+não tem acesso às rotinas de tratamento que tinha o programa inicial.
+	Sinais a ser tratados -> Passam a receber tratamento por omissão.
+	Sinais a ser ignorados -> Continuam a ser ignorados.
+
+
+
+$ Permissão de Envio de Sinais, User ID, Group ID $
+
+Quando um processo executa, tem 4 valores associados a permissões:
+	read user ID, effective user ID; real group ID, effective group ID
+
+Apenas as effective IDs afetam as permissões de acesso,
+as real IDs só são usadas para contabilidade.
+
+Em geral, as permissões de acesso de um processo dependem
+de quem o executa, não de quem é o dono do executável...
+
+Para que isso seja possível existem 2 permissões especiais dos executáveis:
+set-user-id e set-group-id.
+
+Quando um executável com set-user-id é executado, a effective user ID do
+processo passa a ser a do executável. Idem para group id.
+
+APIs: setuid(), seteuid(), setgid(), setegid()
+
+
+
+
+
+$ Funções kill, raise $
+
+#include <sys/types.h>
+#include <signal.h>
+int kill(pid_t pid, int signo);
+int raise(int signo);
+	Return: 0 se OK; -1 se erro.
+
+kill: Envia um sinal a um processo ou a um grupo de processos.
+raise: Envia um sinal ao processo que a invocar (self-signal).
+
+
+
+
+
+$ Comando kill $
+
+kill -signalID {pid}+
+
+Envia o sinal com código signalID para o(s) processo(s) pid.
+Por omissão de signalID é enviado SIGTERM.
+
+Só o dono do processo ou o superuser podem enviar o sinal.
+Os processos podem proteger-se dos sinais, exceto SIGKILL e SIGSTOP.
+
+Usage:
+	kill -l
+		Permite obter a lista dos nomes dos sinais
+	kill -SIGT 1234
+	kill -s SIGT 1234
+		Envia o sinal SIGSIGT ao processo ou grupo de processos cujo pid é 1234.
+
+
+
+
+
+$ Funções alarm, pause, abort, sleep $
+
+#include <unistd.h>
+unsigned int alarm(unsigned int time);     segundos
+unsigned int ualarm(unsigned int time);    microssegundos
+	Return: 0 se OK, -1 se erro.
+
+alarm:
+	Indica ao kernel para enviar um sinal de alarm (SIGALRM) ao processo
+	que o invocou, time segundos após esta invocação.
+ualarm:
+	Indica ao kernel para enviar um sinal de alarm (SIGALRM) ao processo
+	que o invocou, time microssegundos após esta invocação.
+	Se já tiver sido criado um alarme anteriormente, ele é substituído pelo novo.
+	Se time = 0, algum alarm, eventualmente pendente, é cancelado.
+	// Retorna o número de segundos que faltam até que seja enviado.
+
+
+#include <unistd.h>
+int pause(void);
+	Return: -1 com errno igual a EINTR.
+
+pause:
+	Suspende o processo que a invocar, até que ele receba um sinal.
+	A única situação em que função retorna é quando é executado um signal
+	handler e este retorna.
+
+
+#include <stdlib.h>
+void abort(void);
+	Return: none
+
+abort:
+	Causa sempre a terminação anormal do programa.
+	É enviado o sinal SIGABRT ao próprio processo.
+	Pode, no entanto, ser executado um signal handler para tratar este sinal
+	para executar algumas tarefas antes de o processo terminar.
+
+
+#include <unistd.h>
+unsigned int sleep(unsigned int time);     segundos
+unsigned int usleep(unsigned int time);    microssegundos
+	Return: 0 ou o número de segundos que faltavam.
+
+sleep:
+	Suspende o processo que a invocar, até que,
+	- Passem time segundos/microssegundos (retorna 0)
+	- Um sinal seja recebido pelo processo e o signal handler retorne
+	(retorna o número de segundos/microssegundos que faltavam)
+
+
+
+
+
+
+
+
+
+
+$$ Sinais POSIX $$
+
+A norma POSIX estabelece uma forma alternativa de instalação de handlers,
+a função sigaction, e funções de manipulação de uma máscara de sinais que
+pode ser utilizada para bloquear a entrega de sinais a um processo.
+
+sigaction
+	Especifica a ação a executar quando for recebido um sinal
+sigprocmask
+	Usada para examinar ou alterar a máscara de sinais de um processo
+sigpending
+	Útil para testar se um ou mais sinais estão pendentes e especificar
+	o método de tratamento desses sinais, antes de se chamar sigprocmask
+	para desbloqueá-los.
+
+sigemptyset, sigfillset, sigaddset, sigdelset, sigismember,
+sigignore, sighold, sigrelse, sigpause, ...
+
+
+Máscara de Sinais: sigset_t
+
+| | | | | | | | |1|1|1|0|1| | | | | | | | | | | | | | | | | | | | | | |
+                 ^ ^ ^ ^ ^
+                 | | | | `-- SIGTERM
+                 | | | `---- SIGALRM
+                 ... `------ SIGPIPE
+
+Cada bit representa um sinal.
+	Bit a 0: Sinal não passa para o processo
+	Bit a 1: Sinal passa para o processo
+
+Manipular a máscara de sinais:
+#include <signal.h>
+
+int sigprocmask(int cmd, const sigset_t* newmask, sigset_t* oldmask)
+	Return: 0 se OK, -1 se erro.
+	cmd:
+		SIG_SETMASK  - substituir a máscara atual por newmask.
+		SIG_BLOCK    - acrescentar os sinais especificados em newmask à máscara atual.
+		SIG_UNBLOCK  - remover os sinais especificados em newmask da máscara atual.
+	newmask
+		se NULL a máscara atual não é alterada, retorna a oldmask.
+	oldmask
+		se NULL a máscara atual não é retornada.
+
+int sigemptyset(sigset_t* sigmask);
+int sigfillset(sigset_t* sigmask);
+int sigaddset(sigset_t* sigmask, int sig_num);
+int sigdelset(sigset_t* sigmask, int sig_num);
+	Return: 0 se OK, -1 se erro.
+
+int sigismember(const sigset_t* sigmask, int sig_num);
+	Return: 1 se flag está ativada ou 0 se não; -1 se erro.
+
+
+sigemptyset()
+	Limpar todas as flags da máscara.
+	Com esta máscara, todos os sinais passam.
+
+sigfillset()
+	Ativas todas as flags da máscara.
+	Com esta máscara, todos os sinais bloqueáveis passam.
+
+sigaddset()
+	Ativar a flag do sinal sig_num na máscara.
+
+sigdelset()
+	Limpar a flag do sinal sig_num na máscara.
+
+sigismember()
+	Testar se a flag indicada por sig_num está ou não ativada.
+
+
+Sinais pendentes:
+
+int sigpending(sigset_t* sigpset);
+	Retorna o conjunto de sinais que estão pendentes, por estarem bloqueados;
+	permite especificar o tratamento a dar-lhes, antes de invocar
+	sigprocmask para desbloqueá-los.
+
+Instalação de um handler:
+
+int sigaction(int signum, const struct sigaction* action, struct sigaction* oldaction);
+	Return: 0 se OK, -1 se erro.
+
+Permite examinar ou modificar a ação associada a um sinal.
+
+signum = número do sinal cuja ação se quer examinar ou modificar.
+action != NULL se estamos a modificar
+oldaction != NULL o sistema retorna a ação anterior.
+
+struct sigaction {
+	void (*sa_handler)(int);
+		// Endereço do handler ou SIG_IGN ou SIG_DFL.
+	sigset_t sa_mask;
+		// Sinais a acrescentar à máscara.
+	int sa_flags;
+		Modificam a ação do sinal.
+}
+
+sigaction substitui a função signal das primeiras versões do Unix.
+
+int sigsuspend(const sigset_t* sigmask);
+	Return -1, com errno = EINTR
+
+Substitui a máscara de sinais do processo pela máscara especificada em sigmask
+e suspende a execução do processo, retomando a execução após a execução
+de um handler de um sinal.
+Se o sinal recebido terminar o programa, a função nunca retorna.
+Se o sinal não terminar o programa, retorna -1, com errno=EINTR e a máscara
+de sinais do processo é reposta com o valor que tinha antes da invocação.
+
+
+
+
+
+
+
+
+
+
+$$ Sincronização, Problemas $$
+
+A utilização de sinais pode ser complexa porque os handlers podem ser
+chamados assincronamente.
+Sinais que chegam em instantes próximos:
+	    Se 2 sinais chegarem durante um curto intervalo de tempo, pode acontecer
+	que durante a execução de um handler de um sinal seja chamado um handler
+	de outro sinal, diferente do primeiro.
+	    Se vários sinais do mesmo tipo forem entregues a um processo antes que
+	o handler tenha oportunidade de correr, o handler pode ser invocado
+	apenas uma vez, como se só um sinal tivesse sido recebido.
+	Esta situação pode acontecer quando o sinal está bloqueado ou quando o
+	sistema está a executar outros processos enquanto os sinais são entregues.
+	Consequência: não se pode usar um handler para contar o número de sinais recebidos.
+
+O que acontece se chegar um sinal enquanto um handler está a correr?
+Quando o handler de um dado sinal é invocado, esse sinal é, normalmente,
+bloqueado até que o handler retorne. Isto significa que se 2 sinais do mesmo tipo
+chegarem em instantes muito próximos, o segundo ficará retido até que o handler
+retorne (o handler pode desbloquear explicitamente o sinal usando sigprocmask()).
+
+Um handler pode ser interrompido pela chegada de outro tipo de sinal.
+Quando se usa a chamada sigaction para especificar o handler, é possível evitar
+que isto aconteça, indicando que sinais devem ser bloqueados enquanto o handler
+estiver a correr.
+
+Chamadas ao sistema interrompidas por sinais:
+É preciso ter em conta que algumas chamadas ao sistema podem ser interrompidas
+em consequência de ter sido recebido um sinal, enquanto elas estavam a ser
+executadas. Estas chamadas são conhecidas por "slow calls"
+Estas chamadas podem retornar um valor indicativo de erro (-1) e atribuir
+a errno o valor EINTR ou serem re-executadas, automaticamente, pelo OS.
+
+Ter em atenção o que dizem os manuais de cada OS acerca destas chamadas.

@@ -1,0 +1,72 @@
+/***
+ * SOPE Teoria dos Sistemas Operativos #2
+ *
+ * Bruno Carvalho
+ *
+ */
+
+
+$$ Programas de Sistema $$
+
+	Edição de texto
+	Manipulação de ficheiros e diretórios
+	Informação de estado
+	Suporte a linguagens de programação
+	Carregamento e execução de programas
+	Comunicações
+	Shell de comandos
+	...
+
+
+
+$ Exemplo Teórico de de OS por camadas $
+
+	Level	Name 				Objects 				Example Operations
+	
+	13 		Shell 				User programming 		Statement in shell language
+									environment
+
+	12 		User processes		User processes 			Quit, kill, suspend, resume
+
+	11 		Directories 		Directories 			Create, destroy, attach,
+														detach, search, list
+
+	10		Devices 			External devices,		Create, destroy, open, close,
+								printers, keyboards...	read, write
+
+	9 		File system			Files					Create, destroy, open, close,
+														read, write
+
+	8 		Communications 		Pipes 					Create, destroy, open, close,
+														read, write
+
+	7		Virtual Memory		Segments, pages 		Read, write, fetch
+
+	6		Local secondary		Blocks of data,			Read, write, fetch
+			store				device channels
+
+	5 		Primitive			Primitive processes,	Suspend, resume, wait, signal
+			processes			Semaphores, ready list
+
+	(Hardware)
+	4		Interrupts			Interrupt-handling		Invoke, mask, unmask, retry
+								programs
+
+	3		Procedures			Procedures, call stack 	Mark stack, call, return
+
+	2		Instruction set 	Evaluation stack, 		Load, store, add, branch
+								scalar and array data
+
+	1 		Electronic 			Registers, gates, 		Clear, transfer, activate
+			circuits			buses, ...
+
+
+
+$$ Linux $$
+
+Estrutura essencialmente monolítica
+Mas é relativamente modular, internamente.
+Kernel estruturado em duas camadas:
+	Camada independente da arquitetura do hardware (portável)
+	Camada dependente da arquitetura do hardware (não-portável)
+

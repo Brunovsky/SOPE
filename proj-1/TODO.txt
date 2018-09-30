@@ -1,0 +1,11 @@
+TODO:
+
+ADD colors to grep_file and grep_stdin
+
+MODIFY chdir in traversal_dir because chdir(DOTDOT) is not the correct
+behavior most of the time. Either change back to previous directory,
+or not change directory at all.
+
+
+
+(Note: these notes may be outdated)
