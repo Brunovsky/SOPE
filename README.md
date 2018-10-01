@@ -1,5 +1,9 @@
 # SOPE
 
+Project partners:
+[João Alves](github.com/xjoaoalvesx)
+[João Agulha](github.com/joaoagulha)
+
 ## proj-1 (simgrep)
 
 Code, test folder, log files and test bash file for SOPE's first project SIMGREP.
