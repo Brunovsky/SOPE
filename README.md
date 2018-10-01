@@ -1,7 +1,7 @@
 # SOPE
 
 Project partners:
-[João Alves](github.com/xjoaoalvesx)
+[João Alves](https://github.com/xjoaoalvesx)
 [João Agulha](github.com/joaoagulha)
 
 ## proj-1 (simgrep)
